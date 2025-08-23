@@ -1,17 +1,19 @@
 # Site Monitor 🚀
 
-Un outil de surveillance de sites web complet avec interface CLI avancée, écrit en Go.
+Un outil de surveillance de sites web complet avec système d'alertes avancé et interface CLI, écrit en Go.
 
 ## ✨ Fonctionnalités
 
 - 🏃 **Surveillance multi-sites** avec goroutines concurrentes
 - 💾 **Stockage SQLite** avec historique complet des vérifications
 - 📊 **Statistiques détaillées** (uptime, temps de réponse, SLA)
+- 🚨 **Système d'alertes intelligent** (Email, Webhook, Slack, Discord, Teams)
 - 🖥️  **CLI avancée** avec 4 commandes puissantes
 - ⚡ **Monitoring temps réel** avec mode surveillance
 - 📋 **Configuration JSON** flexible et simple
 - 🎯 **Validation HTTP** avec codes de statut personnalisables
 - 🔍 **Filtrage et pagination** pour l'analyse des données
+- 🔔 **Notifications multi-canaux** avec templates personnalisables
 
 ## 🚀 Démarrage rapide
 
@@ -20,7 +22,7 @@ Un outil de surveillance de sites web complet avec interface CLI avancée, écri
 #### Télécharger le binaire pré-compilé (recommandé)
 ```bash
 # Télécharger la dernière version
-wget https://github.com/ton-username/site-monitor/releases/latest/download/site-monitor
+wget https://github.com/papaganelli/site-monitor/releases/latest/download/site-monitor
 
 # Rendre exécutable
 chmod +x site-monitor
@@ -31,7 +33,7 @@ sudo mv site-monitor /usr/local/bin/
 
 #### Compiler depuis les sources
 ```bash
-git clone https://github.com/ton-username/site-monitor.git
+git clone https://github.com/papaganelli/site-monitor.git
 cd site-monitor
 make build
 ```
@@ -54,15 +56,45 @@ Créer un fichier `config.json` :
       "interval": "60s",
       "timeout": "5s"
     }
-  ]
+  ],
+  "alerts": {
+    "email": {
+      "enabled": true,
+      "smtp_server": "smtp.gmail.com",
+      "smtp_port": 587,
+      "username": "alerts@monsite.com",
+      "password": "votre-mot-de-passe-app",
+      "from": "Site Monitor <alerts@monsite.com>",
+      "recipients": ["admin@monsite.com", "dev@monsite.com"],
+      "use_tls": true
+    },
+    "webhook": {
+      "enabled": true,
+      "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+      "format": "slack",
+      "timeout": "30s",
+      "retry_count": 3
+    },
+    "thresholds": {
+      "consecutive_failures": 3,
+      "response_time_threshold": "5s",
+      "uptime_threshold": 95.0,
+      "uptime_window": "24h",
+      "performance_window": "1h",
+      "alert_cooldown": "5m"
+    }
+  }
 }
 ```
 
 ### 3. Utilisation
 
 ```bash
-# Démarrer la surveillance (daemon)
+# Démarrer la surveillance avec alertes (daemon)
 site-monitor run
+
+# Tester la configuration des alertes
+site-monitor alerts test
 
 # Voir les statistiques
 site-monitor stats
@@ -74,7 +106,113 @@ site-monitor history
 site-monitor status
 ```
 
-## 📋 Commandes CLI
+## 🚨 Système d'alertes
+
+Site Monitor intègre un système d'alertes intelligent qui vous notifie automatiquement des problèmes.
+
+### Types d'alertes
+
+- **🔴 Site Down** : Alertes critiques quand un site ne répond plus
+- **🟢 Site Up** : Notifications de récupération après une panne  
+- **🟡 Slow Response** : Avertissements pour les temps de réponse élevés
+- **📉 Low Uptime** : Alertes quand l'uptime passe sous un seuil
+
+### Canaux de notification
+
+#### 📧 **Email (SMTP)**
+Emails HTML riches avec détails complets et recommandations d'actions.
+
+```json
+{
+  "email": {
+    "enabled": true,
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587,
+    "username": "alerts@monsite.com",
+    "password": "votre-mot-de-passe-app",
+    "from": "Site Monitor <alerts@monsite.com>",
+    "recipients": ["admin@monsite.com", "ops@monsite.com"],
+    "use_tls": true
+  }
+}
+```
+
+#### 🔗 **Webhooks**
+Support natif pour Slack, Discord, Microsoft Teams et webhooks génériques.
+
+```json
+{
+  "webhook": {
+    "enabled": true,
+    "url": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
+    "format": "slack",
+    "timeout": "30s",
+    "retry_count": 3,
+    "headers": {
+      "Authorization": "Bearer your-token"
+    }
+  }
+}
+```
+
+**Formats supportés :**
+- `slack` - Messages Slack avec attachments colorés
+- `discord` - Embeds Discord riches  
+- `teams` - MessageCards Microsoft Teams
+- `generic` - JSON personnalisable
+
+### Configuration des seuils
+
+```json
+{
+  "thresholds": {
+    "consecutive_failures": 3,        // Alerter après 3 échecs consécutifs
+    "response_time_threshold": "5s",  // Alerter si réponse > 5 secondes
+    "uptime_threshold": 95.0,         // Alerter si uptime < 95%
+    "uptime_window": "24h",           // Période de calcul de l'uptime
+    "performance_window": "1h",       // Période d'analyse des performances
+    "alert_cooldown": "5m"            // Délai minimum entre alertes
+  }
+}
+```
+
+### Commandes d'alertes
+
+```bash
+# Tester la configuration des alertes
+site-monitor alerts test
+
+# Voir l'historique des alertes envoyées
+site-monitor alerts history
+
+# Tester un canal spécifique
+site-monitor alerts test --channel email
+site-monitor alerts test --channel webhook
+```
+
+### Exemple d'alerte Slack
+
+```
+🚨 SITE DOWN: API de Production is not responding
+
+Site: API de Production
+URL: https://api.monsite.com/health
+Severity: critical
+HTTP Status: 0
+Consecutive Failures: 3
+Error: context deadline exceeded
+```
+
+### Exemple d'email d'alerte
+
+Les emails incluent :
+- **Résumé visuel** avec icônes et couleurs
+- **Tableau détaillé** des métriques
+- **Recommandations d'actions** spécifiques au problème
+- **Liens directs** vers le site affecté
+- **Informations contextuelles** (ID d'alerte, timestamp, etc.)
+
+
 
 ### 🏃 **`run`** - Mode surveillance (par défaut)
 Démarre la surveillance continue de tous les sites configurés.
@@ -200,27 +338,92 @@ site-monitor --version      # Version du logiciel
 
 ## ⚙️ Configuration avancée
 
-### Format du fichier config.json
+### Fichier config.json complet
 
 ```json
 {
   "sites": [
     {
-      "name": "Nom d'affichage du site",
-      "url": "https://example.com/health",
+      "name": "Site Principal Production",
+      "url": "https://monsite.com",
       "interval": "30s",
       "timeout": "10s"
+    },
+    {
+      "name": "API REST v1",
+      "url": "https://api.monsite.com/v1/health",
+      "interval": "60s",
+      "timeout": "5s"
+    },
+    {
+      "name": "Service de Paiement",
+      "url": "https://payments.monsite.com/status",
+      "interval": "2m",
+      "timeout": "15s"
     }
-  ]
+  ],
+  "alerts": {
+    "email": {
+      "enabled": true,
+      "smtp_server": "smtp.gmail.com",
+      "smtp_port": 587,
+      "username": "monitoring@monsite.com",
+      "password": "app-specific-password",
+      "from": "Site Monitor <noreply@monsite.com>",
+      "recipients": [
+        "admin@monsite.com",
+        "devops@monsite.com",
+        "on-call@monsite.com"
+      ],
+      "use_tls": true
+    },
+    "webhook": {
+      "enabled": true,
+      "url": "https://hooks.slack.com/services/T123/B456/xyz789",
+      "format": "slack",
+      "timeout": "30s",
+      "retry_count": 3,
+      "headers": {
+        "User-Agent": "SiteMonitor/0.4.0"
+      }
+    },
+    "thresholds": {
+      "consecutive_failures": 3,
+      "response_time_threshold": "5s",
+      "uptime_threshold": 95.0,
+      "uptime_window": "24h",
+      "performance_window": "1h",
+      "alert_cooldown": "10m"
+    }
+  }
 }
 ```
 
 | Champ | Description | Exemples | Obligatoire |
 |-------|-------------|----------|-------------|
-| `name` | Nom affiché dans les rapports | `"API Production"` | ✅ |
+| `name` | Nom affiché dans les rapports et alertes | `"API Production"` | ✅ |
 | `url` | URL à surveiller | `"https://api.com/health"` | ✅ |
 | `interval` | Fréquence des vérifications | `"30s"`, `"5m"`, `"1h"` | ✅ |
 | `timeout` | Timeout des requêtes HTTP | `"10s"`, `"30s"` | ✅ |
+
+### Configuration des alertes
+
+| Section | Champ | Description | Exemple |
+|---------|-------|-------------|---------|
+| `email` | `enabled` | Activer les alertes email | `true` |
+| | `smtp_server` | Serveur SMTP | `"smtp.gmail.com"` |
+| | `smtp_port` | Port SMTP | `587` |
+| | `username` | Nom d'utilisateur SMTP | `"alerts@monsite.com"` |
+| | `password` | Mot de passe (app password recommandé) | `"abcd-efgh-ijkl-mnop"` |
+| | `recipients` | Liste des destinataires | `["admin@site.com"]` |
+| `webhook` | `enabled` | Activer les webhooks | `true` |
+| | `url` | URL du webhook | `"https://hooks.slack.com/..."` |
+| | `format` | Format des messages | `"slack"`, `"discord"`, `"teams"` |
+| | `retry_count` | Nombre de tentatives | `3` |
+| `thresholds` | `consecutive_failures` | Échecs avant alerte | `3` |
+| | `response_time_threshold` | Seuil de lenteur | `"5s"` |
+| | `uptime_threshold` | Seuil d'uptime (%) | `95.0` |
+| | `alert_cooldown` | Délai entre alertes | `"5m"` |
 
 ### Exemples de configurations
 
@@ -299,7 +502,7 @@ SELECT * FROM results ORDER BY timestamp DESC LIMIT 10;  # 10 dernières vérifi
 ### Build et test
 ```bash
 # Cloner le projet
-git clone https://github.com/ton-username/site-monitor.git
+git clone https://github.com/papaganelli/site-monitor.git
 cd site-monitor
 
 # Installer les dépendances
@@ -381,26 +584,29 @@ sudo systemctl status site-monitor
 
 ## 🚀 Roadmap
 
-### ✅ Version 0.3.0 (Actuelle)
+### ✅ Version 0.4.0 (Actuelle)
+- ✅ Système d'alertes complet (Email, Webhook)
+- ✅ Support Slack, Discord, Microsoft Teams
+- ✅ Seuils configurables et logique intelligente
+- ✅ Templates d'emails HTML riches
+- ✅ Gestion des retry et cooldown anti-spam
 - ✅ CLI avancée avec 4 commandes
 - ✅ Stockage SQLite complet
 - ✅ Statistiques détaillées
-- ✅ Historique avec filtrage
-- ✅ Monitoring temps réel
 
-### 🔮 Version 0.4.0 (Prochaine)
-- [ ] 📧 Système d'alertes (email, webhook, Slack)
-- [ ] 🌐 Dashboard web avec graphiques
-- [ ] 📊 Export des données (JSON, CSV)
-- [ ] 🔔 Notifications push
-- [ ] 📈 Métriques avancées (p95, p99)
+### 🔮 Version 0.5.0 (Prochaine)
+- [ ] 🌐 Dashboard web avec graphiques temps réel
+- [ ] 📊 Export des données (JSON, CSV, API REST)
+- [ ] 🔔 Notifications push et intégrations mobiles
+- [ ] 📈 Métriques avancées (p95, p99, MTTR, MTBF)
+- [ ] 🎨 Templates d'alertes personnalisables
 
-### 🔮 Version 0.5.0
-- [ ] 🐳 Support Docker complet
-- [ ] ☁️  Déploiement cloud (AWS, GCP)
-- [ ] 🔗 Intégrations (Grafana, Prometheus)
-- [ ] 🛡️  Vérifications SSL/TLS
-- [ ] 🌍 Monitoring multi-régions
+### 🔮 Version 0.6.0
+- [ ] 🐳 Support Docker et Kubernetes complet
+- [ ] ☁️  Déploiement cloud (AWS, GCP, Azure)
+- [ ] 🔗 Intégrations (Grafana, Prometheus, DataDog)
+- [ ] 🛡️  Vérifications SSL/TLS et certificats
+- [ ] 🌍 Monitoring multi-régions et géo-distribué
 
 ## 🤝 Contribution
 
@@ -428,14 +634,19 @@ site-monitor/
 │   ├── history.go            # Commande historique
 │   └── status.go             # Commande statut
 ├── config/
-│   └── config.go             # Gestion configuration JSON
+│   └── config.go             # Configuration (sites + alertes)
 ├── monitor/
 │   ├── checker.go            # Logique de surveillance
 │   └── result.go             # Structure des résultats
 ├── storage/
 │   ├── storage.go            # Interface générique
 │   └── sqlite.go             # Implémentation SQLite
-├── config.json               # Configuration des sites
+├── alerts/                   # Système d'alertes
+│   ├── types.go              # Types et interfaces d'alertes
+│   ├── manager.go            # Gestionnaire central d'alertes
+│   ├── email.go              # Canal d'alerte email (SMTP)
+│   └── webhook.go            # Canal webhook (Slack/Discord/Teams)
+├── config.json               # Configuration des sites et alertes
 └── site-monitor.db           # Base SQLite (auto-créée)
 ```
 
@@ -445,11 +656,20 @@ Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de
 
 ## 💬 Support
 
-- 🐛 **Bugs** : [Issues GitHub](https://github.com/ton-username/site-monitor/issues)
-- 💡 **Fonctionnalités** : [Discussions](https://github.com/ton-username/site-monitor/discussions)
-- 📖 **Documentation** : [Wiki](https://github.com/ton-username/site-monitor/wiki)
+- 🐛 **Bugs** : [Issues GitHub](https://github.com/papaganelli/site-monitor/issues)
+- 💡 **Fonctionnalités** : [Discussions](https://github.com/papaganelli/site-monitor/discussions)
+- 📖 **Documentation** : [Wiki](https://github.com/papaganelli/site-monitor/wiki)
 
 ## 📈 Changelog
+
+### v0.4.0 - Système d'Alertes Intelligent
+- 🚨 **Système d'alertes complet** avec 4 types d'alertes automatiques
+- 📧 **Canal Email** avec templates HTML riches et SMTP configurable
+- 🔗 **Canal Webhook** avec support Slack, Discord, Microsoft Teams
+- ⚙️  **Seuils configurables** pour tous les types d'alertes
+- 🛡️  **Anti-spam** avec cooldown et logique d'état intelligente
+- 🔄 **Retry automatique** pour les webhooks avec backoff exponentiel
+- 📊 **Intégration complète** avec le système de monitoring existant
 
 ### v0.3.0 - CLI Avancée
 - ✨ Ajout CLI complète avec 4 commandes puissantes
@@ -477,4 +697,4 @@ Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de
 
 ---
 
-**Fait avec ❤️ en Go** • [Site Monitor](https://github.com/ton-username/site-monitor)
+**Fait avec ❤️ en Go** • [Site Monitor](https://github.com/papaganelli/site-monitor)

@@ -36,7 +36,7 @@ func main() {
 
 	// Show version
 	if *showVersion {
-		fmt.Println("Site Monitor v0.3.0")
+		fmt.Println("Site Monitor v0.4.0")
 		return
 	}
 
