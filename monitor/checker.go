@@ -6,11 +6,17 @@ import (
 	"time"
 )
 
+// Storage interface to avoid circular imports
+type Storage interface {
+	SaveResult(result Result) error
+}
+
 type Monitor struct {
 	Name     string // Display name for the monitor
 	URL      string
 	Interval time.Duration
 	client   *http.Client
+	storage  Storage // Storage for persisting results
 }
 
 // New creates a new monitor instance
@@ -35,6 +41,11 @@ func (m *Monitor) SetTimeout(timeout time.Duration) {
 	m.client.Timeout = timeout
 }
 
+// SetStorage sets the storage backend for persisting results
+func (m *Monitor) SetStorage(storage Storage) {
+	m.storage = storage
+}
+
 // Start begins the monitoring loop
 func (m *Monitor) Start() error {
 	ticker := time.NewTicker(m.Interval)
@@ -43,11 +54,13 @@ func (m *Monitor) Start() error {
 	// First check immediately
 	result := m.check()
 	fmt.Println(result)
+	m.saveResult(result)
 
 	// Use for range instead of for { select {} }
 	for range ticker.C {
 		result := m.check()
 		fmt.Println(result)
+		m.saveResult(result)
 	}
 
 	return nil // This will never be reached, but satisfies the function signature
@@ -78,4 +91,14 @@ func (m *Monitor) check() Result {
 	result.Success = resp.StatusCode >= 200 && resp.StatusCode < 400
 
 	return result
+}
+
+// saveResult saves the result to storage if available
+func (m *Monitor) saveResult(result Result) {
+	if m.storage != nil {
+		if err := m.storage.SaveResult(result); err != nil {
+			// Log error but don't fail the monitoring
+			fmt.Printf("⚠️ Failed to save result for %s: %v\n", m.Name, err)
+		}
+	}
 }
