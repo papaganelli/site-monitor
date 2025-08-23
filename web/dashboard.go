@@ -9,11 +9,9 @@ const dashboardHTML = `<!DOCTYPE html>
     <title>Site Monitor Dashboard</title>
     <link rel="stylesheet" href="/static/dashboard.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.30.0/index.min.js"></script>
 </head>
 <body>
     <div class="dashboard">
-        <!-- Header -->
         <header class="header">
             <div class="header-content">
                 <div class="logo">
@@ -33,9 +31,7 @@ const dashboardHTML = `<!DOCTYPE html>
             </div>
         </header>
 
-        <!-- Main Content -->
         <main class="main-content">
-            <!-- Overview Cards -->
             <section class="overview-section">
                 <div class="overview-grid">
                     <div class="overview-card total-sites">
@@ -72,15 +68,12 @@ const dashboardHTML = `<!DOCTYPE html>
                 </div>
             </section>
 
-            <!-- Sites Grid -->
             <section class="sites-section">
                 <h2 class="section-title">Sites Status</h2>
                 <div class="sites-grid" id="sites-grid">
-                    <!-- Sites will be populated by JavaScript -->
                 </div>
             </section>
 
-            <!-- Charts Section -->
             <section class="charts-section">
                 <div class="charts-grid">
                     <div class="chart-container">
@@ -95,7 +88,6 @@ const dashboardHTML = `<!DOCTYPE html>
                 </div>
             </section>
 
-            <!-- Recent Activity -->
             <section class="activity-section">
                 <h2 class="section-title">Recent Activity</h2>
                 <div class="activity-container">
@@ -107,22 +99,19 @@ const dashboardHTML = `<!DOCTYPE html>
         </main>
     </div>
 
-    <!-- Loading Overlay -->
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-spinner"></div>
         <div class="loading-text">Loading Dashboard...</div>
     </div>
 
-    <!-- Toast Notifications -->
     <div class="toast-container" id="toast-container"></div>
 
     <script src="/static/dashboard.js"></script>
 </body>
 </html>`
 
-// dashboardCSS contains the modern CSS styles
-const dashboardCSS = `/* Modern Dashboard Styles */
-:root {
+// dashboardCSS contains the CSS styles
+const dashboardCSS = `:root {
     --primary-color: #2563eb;
     --primary-dark: #1d4ed8;
     --secondary-color: #64748b;
@@ -131,7 +120,6 @@ const dashboardCSS = `/* Modern Dashboard Styles */
     --error-color: #dc2626;
     --background-primary: #ffffff;
     --background-secondary: #f8fafc;
-    --background-dark: #0f172a;
     --text-primary: #1e293b;
     --text-secondary: #64748b;
     --border-color: #e2e8f0;
@@ -160,21 +148,19 @@ const dashboardCSS = `/* Modern Dashboard Styles */
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: var(--background-secondary);
     color: var(--text-primary);
     line-height: 1.6;
     overflow-x: hidden;
 }
 
-/* Dashboard Layout */
 .dashboard {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
-/* Header */
 .header {
     background: var(--background-primary);
     border-bottom: 1px solid var(--border-color);
@@ -267,11 +253,6 @@ body {
     transition: transform 0.3s;
 }
 
-.btn-refresh:active .refresh-icon {
-    transform: rotate(180deg);
-}
-
-/* Main Content */
 .main-content {
     flex: 1;
     max-width: 1400px;
@@ -285,12 +266,8 @@ body {
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
 }
 
-/* Overview Cards */
 .overview-section {
     margin-bottom: 3rem;
 }
@@ -330,14 +307,6 @@ body {
     background: var(--primary-color);
 }
 
-.overview-card.healthy-sites::before {
-    background: var(--success-color);
-}
-
-.overview-card.uptime::before {
-    background: linear-gradient(90deg, var(--success-color), var(--primary-color));
-}
-
 .card-icon {
     font-size: 2rem;
     opacity: 0.8;
@@ -361,7 +330,6 @@ body {
     margin-top: 0.25rem;
 }
 
-/* Sites Grid */
 .sites-section {
     margin-bottom: 3rem;
 }
@@ -379,7 +347,6 @@ body {
     padding: 1.5rem;
     box-shadow: var(--shadow-sm);
     transition: all 0.2s;
-    position: relative;
 }
 
 .site-card:hover {
@@ -422,11 +389,6 @@ body {
     color: var(--error-color);
 }
 
-.site-status.stale {
-    background: #f1f5f9;
-    color: var(--secondary-color);
-}
-
 .site-metrics {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -451,15 +413,6 @@ body {
     margin-top: 0.25rem;
 }
 
-.site-chart {
-    height: 40px;
-    margin-top: 1rem;
-    background: linear-gradient(90deg, var(--success-color), var(--primary-color));
-    border-radius: var(--radius-sm);
-    opacity: 0.1;
-}
-
-/* Charts */
 .charts-section {
     margin-bottom: 3rem;
 }
@@ -490,7 +443,6 @@ body {
     max-height: 300px;
 }
 
-/* Activity Section */
 .activity-section {
     margin-bottom: 2rem;
 }
@@ -567,7 +519,6 @@ body {
     color: var(--text-secondary);
 }
 
-/* Loading Overlay */
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -607,7 +558,6 @@ body {
     display: none;
 }
 
-/* Toast Notifications */
 .toast-container {
     position: fixed;
     top: 1rem;
@@ -677,7 +627,6 @@ body {
     color: var(--text-primary);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .header-content {
         padding: 1rem;
@@ -707,30 +656,6 @@ body {
     }
 }
 
-@media (max-width: 480px) {
-    .logo h1 {
-        font-size: 1.25rem;
-    }
-    
-    .overview-card {
-        padding: 1rem;
-    }
-    
-    .card-value {
-        font-size: 1.5rem;
-    }
-    
-    .site-card {
-        padding: 1rem;
-    }
-    
-    .toast {
-        min-width: 280px;
-        margin: 0 1rem;
-    }
-}
-
-/* Animations and Transitions */
 .fade-in {
     animation: fadeIn 0.5s ease-out;
 }
@@ -738,233 +663,172 @@ body {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
-}
-
-.scale-in {
-    animation: scaleIn 0.3s ease-out;
-}
-
-@keyframes scaleIn {
-    from { transform: scale(0.95); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--background-secondary);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--text-secondary);
 }`
 
-// dashboardJS contains the JavaScript code with the corrected version
-const dashboardJS = `// Dashboard JavaScript - Version corrigée
-class SiteMonitorDashboard {
-    constructor() {
-        this.ws = null;
-        this.charts = {};
-        this.lastUpdate = null;
-        this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 5;
-        
-        this.init();
-    }
+// dashboardJS contains the JavaScript code
+const dashboardJS = `var SiteMonitorDashboard = function() {
+    this.ws = null;
+    this.charts = {};
+    this.lastUpdate = null;
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
     
-    async init() {
-        await this.loadInitialData();
-        this.initWebSocket();
-        this.initCharts();
-        this.startPeriodicUpdates();
-        this.hideLoadingOverlay();
-    }
+    this.init();
+};
+
+SiteMonitorDashboard.prototype.init = function() {
+    var self = this;
+    this.loadInitialData().then(function() {
+        self.initWebSocket();
+        self.initCharts();
+        self.startPeriodicUpdates();
+        self.hideLoadingOverlay();
+    });
+};
+
+SiteMonitorDashboard.prototype.loadInitialData = function() {
+    var self = this;
+    return Promise.all([
+        fetch('/api/overview').then(function(r) { return r.json(); }),
+        fetch('/api/history?limit=100').then(function(r) { return r.json(); })
+    ]).then(function(results) {
+        self.updateOverview(results[0]);
+        self.updateSitesGrid(results[0].sites);
+        self.updateActivityFeed(results[1]);
+    }).catch(function(error) {
+        console.error('Failed to load initial data:', error);
+        self.showToast('Failed to load dashboard data', 'error');
+    });
+};
+
+SiteMonitorDashboard.prototype.initWebSocket = function() {
+    var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    var wsUrl = protocol + '//' + window.location.host + '/ws';
+    var self = this;
     
-    async loadInitialData() {
-        try {
-            const [overview, history] = await Promise.all([
-                fetch('/api/overview').then(r => r.json()),
-                fetch('/api/history?limit=100').then(r => r.json())
-            ]);
-            
-            this.updateOverview(overview);
-            this.updateSitesGrid(overview.sites);
-            this.updateActivityFeed(history);
-            
-        } catch (error) {
-            console.error('Failed to load initial data:', error);
-            this.showToast('Failed to load dashboard data', 'error');
-        }
-    }
+    this.ws = new WebSocket(wsUrl);
     
-    initWebSocket() {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = protocol + '//' + window.location.host + '/ws';
-        
-        this.ws = new WebSocket(wsUrl);
-        
-        this.ws.onopen = () => {
-            console.log('WebSocket connected');
-            this.updateConnectionStatus(true);
-            this.reconnectAttempts = 0;
-        };
-        
-        this.ws.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            this.handleWebSocketMessage(message);
-        };
-        
-        this.ws.onclose = () => {
-            console.log('WebSocket disconnected');
-            this.updateConnectionStatus(false);
-            this.attemptReconnect();
-        };
-        
-        this.ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
-            this.updateConnectionStatus(false);
-        };
-    }
+    this.ws.onopen = function() {
+        console.log('WebSocket connected');
+        self.updateConnectionStatus(true);
+        self.reconnectAttempts = 0;
+    };
     
-    attemptReconnect() {
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-            this.reconnectAttempts++;
-            const delay = Math.pow(2, this.reconnectAttempts) * 1000;
-            
-            console.log('Attempting to reconnect in ' + delay + 'ms (attempt ' + this.reconnectAttempts + ')');
-            
-            setTimeout(() => {
-                this.initWebSocket();
-            }, delay);
-        } else {
-            this.showToast('Connection lost. Please refresh the page.', 'error');
-        }
-    }
+    this.ws.onmessage = function(event) {
+        var message = JSON.parse(event.data);
+        self.handleWebSocketMessage(message);
+    };
     
-    handleWebSocketMessage(message) {
-        switch (message.type) {
-            case 'overview_update':
-                this.updateOverview(message.data);
-                this.updateSitesGrid(message.data.sites);
-                this.updateCharts();
-                break;
-            default:
-                console.log('Unknown message type:', message.type);
-        }
-    }
+    this.ws.onclose = function() {
+        console.log('WebSocket disconnected');
+        self.updateConnectionStatus(false);
+        self.attemptReconnect();
+    };
     
-    updateConnectionStatus(connected) {
-        const statusIndicator = document.getElementById('connection-status');
-        const statusDot = statusIndicator.querySelector('.status-dot');
-        const statusText = statusIndicator.querySelector('span');
-        
-        if (connected) {
-            statusDot.style.background = '#059669';
-            statusText.textContent = 'Connected';
-        } else {
-            statusDot.style.background = '#dc2626';
-            statusText.textContent = 'Disconnected';
-        }
+    this.ws.onerror = function(error) {
+        console.error('WebSocket error:', error);
+        self.updateConnectionStatus(false);
+    };
+};
+
+SiteMonitorDashboard.prototype.handleWebSocketMessage = function(message) {
+    switch (message.type) {
+        case 'overview_update':
+            this.updateOverview(message.data);
+            this.updateSitesGrid(message.data.sites);
+            this.updateCharts();
+            break;
+        default:
+            console.log('Unknown message type:', message.type);
     }
+};
+
+SiteMonitorDashboard.prototype.updateConnectionStatus = function(connected) {
+    var statusIndicator = document.getElementById('connection-status');
+    var statusDot = statusIndicator.querySelector('.status-dot');
+    var statusText = statusIndicator.querySelector('span');
     
-    updateOverview(data) {
-        document.getElementById('total-sites').textContent = data.total_sites;
-        document.getElementById('healthy-sites').textContent = data.healthy_sites;
-        document.getElementById('overall-uptime').textContent = data.overall_uptime.toFixed(1) + '%';
-        document.getElementById('total-checks').textContent = this.formatNumber(data.total_checks);
-        
-        this.lastUpdate = new Date(data.last_update);
+    if (connected) {
+        statusDot.style.background = '#059669';
+        statusText.textContent = 'Connected';
+    } else {
+        statusDot.style.background = '#dc2626';
+        statusText.textContent = 'Disconnected';
     }
+};
+
+SiteMonitorDashboard.prototype.updateOverview = function(data) {
+    document.getElementById('total-sites').textContent = data.total_sites;
+    document.getElementById('healthy-sites').textContent = data.healthy_sites;
+    document.getElementById('overall-uptime').textContent = data.overall_uptime.toFixed(1) + '%';
+    document.getElementById('total-checks').textContent = this.formatNumber(data.total_checks);
     
-    updateSitesGrid(sites) {
-        const grid = document.getElementById('sites-grid');
-        grid.innerHTML = '';
-        
-        sites.forEach(site => {
-            const siteCard = this.createSiteCard(site);
-            grid.appendChild(siteCard);
-        });
-    }
+    this.lastUpdate = new Date(data.last_update);
+};
+
+SiteMonitorDashboard.prototype.updateSitesGrid = function(sites) {
+    var grid = document.getElementById('sites-grid');
+    grid.innerHTML = '';
+    var self = this;
     
-    createSiteCard(site) {
-        const card = document.createElement('div');
-        card.className = 'site-card fade-in';
-        
-        const lastCheckTime = this.formatTimeAgo(new Date(site.last_check));
-        
-        card.innerHTML = '' +
-            '<div class="site-header">' +
-                '<div class="site-name">' + this.escapeHtml(site.name) + '</div>' +
-                '<div class="site-status ' + site.status + '">' + site.status + '</div>' +
+    sites.forEach(function(site) {
+        var siteCard = self.createSiteCard(site);
+        grid.appendChild(siteCard);
+    });
+};
+
+SiteMonitorDashboard.prototype.createSiteCard = function(site) {
+    var card = document.createElement('div');
+    card.className = 'site-card fade-in';
+    
+    var lastCheckTime = this.formatTimeAgo(new Date(site.last_check));
+    
+    card.innerHTML = 
+        '<div class="site-header">' +
+            '<div class="site-name">' + this.escapeHtml(site.name) + '</div>' +
+            '<div class="site-status ' + site.status + '">' + site.status + '</div>' +
+        '</div>' +
+        '<div class="site-metrics">' +
+            '<div class="metric">' +
+                '<div class="metric-value">' + site.uptime.toFixed(1) + '%</div>' +
+                '<div class="metric-label">Uptime</div>' +
             '</div>' +
-            '<div class="site-metrics">' +
-                '<div class="metric">' +
-                    '<div class="metric-value">' + site.uptime.toFixed(1) + '%</div>' +
-                    '<div class="metric-label">Uptime</div>' +
-                '</div>' +
-                '<div class="metric">' +
-                    '<div class="metric-value">' + site.response_time_ms + 'ms</div>' +
-                    '<div class="metric-label">Response Time</div>' +
-                '</div>' +
+            '<div class="metric">' +
+                '<div class="metric-value">' + site.response_time_ms + 'ms</div>' +
+                '<div class="metric-label">Response Time</div>' +
             '</div>' +
-            '<div class="site-footer">' +
-                '<small class="last-check">Last check: ' + lastCheckTime + '</small>' +
-            '</div>' +
-            '<div class="site-chart"></div>';
-        
-        return card;
-    }
+        '</div>';
     
-    initCharts() {
-        this.initResponseTimeChart();
-        this.initUptimeChart();
-    }
+    return card;
+};
+
+SiteMonitorDashboard.prototype.initCharts = function() {
+    this.initResponseTimeChart();
+    this.initUptimeChart();
+};
+
+SiteMonitorDashboard.prototype.initResponseTimeChart = function() {
+    var ctx = document.getElementById('response-time-chart');
+    if (!ctx || typeof Chart === 'undefined') return;
     
-    async initResponseTimeChart() {
-        const ctx = document.getElementById('response-time-chart');
-        if (!ctx) return;
-        
-        try {
-            const history = await fetch('/api/history?since=24h&limit=100').then(r => r.json());
-            const chartData = this.processResponseTimeData(history);
+    var self = this;
+    
+    fetch('/api/history?since=24h&limit=100')
+        .then(function(r) { return r.json(); })
+        .then(function(history) {
+            var chartData = self.processResponseTimeData(history);
             
-            this.charts.responseTime = new Chart(ctx, {
+            self.charts.responseTime = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: chartData.labels,
                     datasets: chartData.datasets
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'bottom'
-                        }
-                    },
                     scales: {
                         x: {
-                            type: 'time',
-                            time: {
-                                displayFormats: {
-                                    hour: 'HH:mm',
-                                    minute: 'HH:mm'
-                                }
-                            },
+                            type: 'linear',
                             title: {
                                 display: true,
                                 text: 'Time'
@@ -980,30 +844,65 @@ class SiteMonitorDashboard {
                     }
                 }
             });
-        } catch (error) {
+        })
+        .catch(function(error) {
             console.error('Failed to initialize response time chart:', error);
+        });
+};
+
+SiteMonitorDashboard.prototype.processResponseTimeData = function(history) {
+    var siteData = {};
+    var colors = ['#2563eb', '#059669', '#d97706', '#dc2626', '#7c3aed'];
+    
+    history.forEach(function(entry) {
+        if (!siteData[entry.site_name]) {
+            siteData[entry.site_name] = [];
+        }
+        siteData[entry.site_name].push({
+            x: new Date(entry.timestamp).getTime(),
+            y: entry.duration / 1000000
+        });
+    });
+    
+    var datasets = [];
+    var colorIndex = 0;
+    for (var siteName in siteData) {
+        if (siteData.hasOwnProperty(siteName)) {
+            datasets.push({
+                label: siteName,
+                data: siteData[siteName].slice(-50),
+                borderColor: colors[colorIndex % colors.length],
+                backgroundColor: colors[colorIndex % colors.length] + '20',
+                tension: 0.4,
+                fill: false
+            });
+            colorIndex++;
         }
     }
     
-    async initUptimeChart() {
-        const ctx = document.getElementById('uptime-chart');
-        if (!ctx) return;
-        
-        try {
-            const stats = await fetch('/api/stats').then(r => r.json());
-            const chartData = this.processUptimeData(stats);
+    return {
+        datasets: datasets
+    };
+};
+
+SiteMonitorDashboard.prototype.initUptimeChart = function() {
+    var ctx = document.getElementById('uptime-chart');
+    if (!ctx || typeof Chart === 'undefined') return;
+    
+    var self = this;
+    
+    fetch('/api/stats')
+        .then(function(r) { return r.json(); })
+        .then(function(stats) {
+            var chartData = self.processUptimeData(stats);
             
-            this.charts.uptime = new Chart(ctx, {
+            self.charts.uptime = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: chartData.labels,
                     datasets: [{
                         data: chartData.data,
-                        backgroundColor: [
-                            '#059669',
-                            '#dc2626',
-                            '#d97706'
-                        ],
+                        backgroundColor: ['#059669', '#dc2626', '#d97706'],
                         borderWidth: 0,
                         hoverOffset: 4
                     }]
@@ -1019,214 +918,222 @@ class SiteMonitorDashboard {
                     }
                 }
             });
-        } catch (error) {
+        })
+        .catch(function(error) {
             console.error('Failed to initialize uptime chart:', error);
-        }
-    }
-    
-    processResponseTimeData(history) {
-        const siteData = {};
-        const colors = ['#2563eb', '#059669', '#d97706', '#dc2626', '#7c3aed'];
-        
-        history.forEach(entry => {
-            if (!siteData[entry.site_name]) {
-                siteData[entry.site_name] = [];
-            }
-            siteData[entry.site_name].push({
-                x: entry.timestamp,
-                y: entry.duration / 1000000
-            });
         });
-        
-        const datasets = Object.keys(siteData).map((siteName, index) => ({
-            label: siteName,
-            data: siteData[siteName].slice(-50),
-            borderColor: colors[index % colors.length],
-            backgroundColor: colors[index % colors.length] + '20',
-            tension: 0.4,
-            fill: false
-        }));
-        
-        return {
-            labels: [],
-            datasets
-        };
-    }
+};
+
+SiteMonitorDashboard.prototype.processUptimeData = function(stats) {
+    var totalSuccess = 0;
+    var totalFailure = 0;
     
-    processUptimeData(stats) {
-        let totalSuccess = 0;
-        let totalFailure = 0;
-        
-        Object.values(stats).forEach(site => {
+    for (var key in stats) {
+        if (stats.hasOwnProperty(key)) {
+            var site = stats[key];
             totalSuccess += site.successful_checks;
             totalFailure += site.failed_checks;
-        });
-        
-        const total = totalSuccess + totalFailure;
-        
-        return {
-            labels: ['Successful', 'Failed'],
-            data: [
-                total > 0 ? (totalSuccess / total * 100).toFixed(1) : 0,
-                total > 0 ? (totalFailure / total * 100).toFixed(1) : 0
-            ]
-        };
-    }
-    
-    async updateCharts() {
-        try {
-            if (this.charts.responseTime) {
-                const history = await fetch('/api/history?since=24h&limit=100').then(r => r.json());
-                const chartData = this.processResponseTimeData(history);
-                this.charts.responseTime.data.datasets = chartData.datasets;
-                this.charts.responseTime.update('none');
-            }
-            
-            if (this.charts.uptime) {
-                const stats = await fetch('/api/stats').then(r => r.json());
-                const chartData = this.processUptimeData(stats);
-                this.charts.uptime.data.datasets[0].data = chartData.data;
-                this.charts.uptime.update('none');
-            }
-        } catch (error) {
-            console.error('Failed to update charts:', error);
         }
     }
     
-    async updateActivityFeed(history) {
-        const activityList = document.getElementById('activity-list');
-        activityList.innerHTML = '';
-        
-        const recentHistory = history.slice(0, 20);
-        
-        if (recentHistory.length === 0) {
-            activityList.innerHTML = '<div class="activity-loading">No recent activity found</div>';
-            return;
-        }
-        
-        recentHistory.forEach(entry => {
-            const activityItem = this.createActivityItem(entry);
-            activityList.appendChild(activityItem);
-        });
+    var total = totalSuccess + totalFailure;
+    
+    return {
+        labels: ['Successful', 'Failed'],
+        data: [
+            total > 0 ? (totalSuccess / total * 100).toFixed(1) : 0,
+            total > 0 ? (totalFailure / total * 100).toFixed(1) : 0
+        ]
+    };
+};
+
+SiteMonitorDashboard.prototype.updateActivityFeed = function(history) {
+    var activityList = document.getElementById('activity-list');
+    activityList.innerHTML = '';
+    var self = this;
+    
+    var recentHistory = history.slice(0, 20);
+    
+    if (recentHistory.length === 0) {
+        activityList.innerHTML = '<div class="activity-loading">No recent activity found</div>';
+        return;
     }
     
-    createActivityItem(entry) {
-        const item = document.createElement('div');
-        item.className = 'activity-item';
-        
-        const iconClass = entry.success ? 'success' : 'error';
-        const statusText = entry.success ? 'UP' : 'DOWN';
-        const timeAgo = this.formatTimeAgo(new Date(entry.timestamp));
-        
-        let details = 'Response time: ' + Math.round(entry.duration / 1000000) + 'ms';
-        if (!entry.success && entry.error) {
-            details = 'Error: ' + entry.error;
-        }
-        
-        item.innerHTML = '' +
-            '<div class="activity-icon ' + iconClass + '"></div>' +
-            '<div class="activity-content">' +
-                '<div class="activity-message">' + this.escapeHtml(entry.site_name) + ' is ' + statusText + '</div>' +
-                '<div class="activity-details">' + this.escapeHtml(details) + '</div>' +
-            '</div>' +
-            '<div class="activity-time">' + timeAgo + '</div>';
-        
-        return item;
+    recentHistory.forEach(function(entry) {
+        var activityItem = self.createActivityItem(entry);
+        activityList.appendChild(activityItem);
+    });
+};
+
+SiteMonitorDashboard.prototype.createActivityItem = function(entry) {
+    var item = document.createElement('div');
+    item.className = 'activity-item';
+    
+    var iconClass = entry.success ? 'success' : 'error';
+    var statusText = entry.success ? 'UP' : 'DOWN';
+    var timeAgo = this.formatTimeAgo(new Date(entry.timestamp));
+    
+    var details = 'Response time: ' + Math.round(entry.duration / 1000000) + 'ms';
+    if (!entry.success && entry.error) {
+        details = 'Error: ' + entry.error;
     }
     
-    startPeriodicUpdates() {
-        setInterval(async () => {
-            try {
-                const overview = await fetch('/api/overview').then(r => r.json());
-                this.updateOverview(overview);
-                this.updateSitesGrid(overview.sites);
+    item.innerHTML = 
+        '<div class="activity-icon ' + iconClass + '"></div>' +
+        '<div class="activity-content">' +
+            '<div class="activity-message">' + this.escapeHtml(entry.site_name) + ' is ' + statusText + '</div>' +
+            '<div class="activity-details">' + this.escapeHtml(details) + '</div>' +
+        '</div>' +
+        '<div class="activity-time">' + timeAgo + '</div>';
+    
+    return item;
+};
+
+SiteMonitorDashboard.prototype.startPeriodicUpdates = function() {
+    var self = this;
+    setInterval(function() {
+        fetch('/api/overview')
+            .then(function(r) { return r.json(); })
+            .then(function(overview) {
+                self.updateOverview(overview);
+                self.updateSitesGrid(overview.sites);
                 
-                if (!this.lastActivityUpdate || Date.now() - this.lastActivityUpdate > 60000) {
-                    const history = await fetch('/api/history?limit=20').then(r => r.json());
-                    this.updateActivityFeed(history);
-                    this.lastActivityUpdate = Date.now();
+                if (!self.lastActivityUpdate || Date.now() - self.lastActivityUpdate > 60000) {
+                    fetch('/api/history?limit=20')
+                        .then(function(r) { return r.json(); })
+                        .then(function(history) {
+                            self.updateActivityFeed(history);
+                            self.lastActivityUpdate = Date.now();
+                        });
                 }
-                
-            } catch (error) {
+            })
+            .catch(function(error) {
                 console.error('Failed to update dashboard:', error);
-            }
-        }, 30000);
-    }
+            });
+    }, 30000);
+};
+
+SiteMonitorDashboard.prototype.hideLoadingOverlay = function() {
+    var overlay = document.getElementById('loading-overlay');
+    overlay.classList.add('hidden');
+};
+
+SiteMonitorDashboard.prototype.showToast = function(message, type) {
+    type = type || 'info';
+    var container = document.getElementById('toast-container');
+    var toast = document.createElement('div');
+    toast.className = 'toast ' + type;
     
-    hideLoadingOverlay() {
-        const overlay = document.getElementById('loading-overlay');
-        overlay.classList.add('hidden');
-    }
+    var icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+    };
     
-    showToast(message, type) {
-        type = type || 'info';
-        const container = document.getElementById('toast-container');
-        const toast = document.createElement('div');
-        toast.className = 'toast ' + type;
-        
-        const icons = {
-            success: '✅',
-            error: '❌',
-            warning: '⚠️',
-            info: 'ℹ️'
-        };
-        
-        toast.innerHTML = '' +
-            '<div class="toast-icon">' + (icons[type] || icons.info) + '</div>' +
-            '<div class="toast-message">' + this.escapeHtml(message) + '</div>' +
-            '<button class="toast-close" onclick="this.parentElement.remove()">×</button>';
-        
-        container.appendChild(toast);
-        
-        setTimeout(() => {
-            if (toast.parentNode) {
-                toast.remove();
-            }
-        }, 5000);
-    }
+    toast.innerHTML = 
+        '<div class="toast-icon">' + (icons[type] || icons.info) + '</div>' +
+        '<div class="toast-message">' + this.escapeHtml(message) + '</div>' +
+        '<button class="toast-close" onclick="this.parentElement.remove()">×</button>';
     
-    formatNumber(num) {
-        if (num >= 1000000) {
-            return (num / 1000000).toFixed(1) + 'M';
+    container.appendChild(toast);
+    
+    setTimeout(function() {
+        if (toast.parentNode) {
+            toast.remove();
         }
-        if (num >= 1000) {
-            return (num / 1000).toFixed(1) + 'K';
-        }
-        return num.toString();
+    }, 5000);
+};
+
+SiteMonitorDashboard.prototype.formatNumber = function(num) {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
     }
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+};
+
+SiteMonitorDashboard.prototype.formatTimeAgo = function(date) {
+    var now = new Date();
+    var diff = now - date;
+    var minutes = Math.floor(diff / 60000);
+    var hours = Math.floor(minutes / 60);
+    var days = Math.floor(hours / 24);
     
-    formatTimeAgo(date) {
-        const now = new Date();
-        const diff = now - date;
-        const minutes = Math.floor(diff / 60000);
-        const hours = Math.floor(minutes / 60);
-        const days = Math.floor(hours / 24);
+    if (days > 0) return days + 'd ago';
+    if (hours > 0) return hours + 'h ago';
+    if (minutes > 0) return minutes + 'm ago';
+    return 'Just now';
+};
+
+SiteMonitorDashboard.prototype.escapeHtml = function(text) {
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+};
+
+SiteMonitorDashboard.prototype.attemptReconnect = function() {
+    var self = this;
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+        this.reconnectAttempts++;
+        var delay = Math.pow(2, this.reconnectAttempts) * 1000;
         
-        if (days > 0) return days + 'd ago';
-        if (hours > 0) return hours + 'h ago';
-        if (minutes > 0) return minutes + 'm ago';
-        return 'Just now';
+        console.log('Attempting to reconnect in ' + delay + 'ms (attempt ' + this.reconnectAttempts + ')');
+        
+        setTimeout(function() {
+            self.initWebSocket();
+        }, delay);
+    } else {
+        this.showToast('Connection lost. Please refresh the page.', 'error');
+    }
+};
+
+SiteMonitorDashboard.prototype.updateCharts = function() {
+    var self = this;
+    
+    if (this.charts.responseTime) {
+        fetch('/api/history?since=24h&limit=100')
+            .then(function(r) { return r.json(); })
+            .then(function(history) {
+                var chartData = self.processResponseTimeData(history);
+                self.charts.responseTime.data.datasets = chartData.datasets;
+                self.charts.responseTime.update('none');
+            })
+            .catch(function(error) {
+                console.error('Failed to update response time chart:', error);
+            });
     }
     
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+    if (this.charts.uptime) {
+        fetch('/api/stats')
+            .then(function(r) { return r.json(); })
+            .then(function(stats) {
+                var chartData = self.processUptimeData(stats);
+                self.charts.uptime.data.datasets[0].data = chartData.data;
+                self.charts.uptime.update('none');
+            })
+            .catch(function(error) {
+                console.error('Failed to update uptime chart:', error);
+            });
     }
-}
+};
 
 function refreshData() {
-    window.dashboard.loadInitialData();
-    window.dashboard.updateCharts();
-    
-    const refreshBtn = document.querySelector('.btn-refresh');
-    const icon = refreshBtn.querySelector('.refresh-icon');
-    icon.style.transform = 'rotate(360deg)';
-    setTimeout(() => {
-        icon.style.transform = 'rotate(0deg)';
-    }, 500);
+    if (window.dashboard) {
+        window.dashboard.loadInitialData();
+        window.dashboard.updateCharts();
+        
+        var refreshBtn = document.querySelector('.btn-refresh');
+        var icon = refreshBtn.querySelector('.refresh-icon');
+        icon.style.transform = 'rotate(360deg)';
+        setTimeout(function() {
+            icon.style.transform = 'rotate(0deg)';
+        }, 500);
+    }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
     window.dashboard = new SiteMonitorDashboard();
 });`

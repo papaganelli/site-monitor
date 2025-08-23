@@ -79,22 +79,35 @@ func (d *Dashboard) Stop() error {
 // serveDashboard serves the main dashboard HTML page
 func (d *Dashboard) serveDashboard(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	w.Write([]byte(dashboardHTML))
+	if _, err := w.Write([]byte(dashboardHTML)); err != nil {
+		log.Printf("Failed to write dashboard HTML: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
 }
 
 // serveStatic serves static files (CSS, JS, etc.)
 func (d *Dashboard) serveStatic(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 
+	var content []byte
+	var contentType string
+
 	switch {
 	case path == "/dashboard.css":
-		w.Header().Set("Content-Type", "text/css")
-		w.Write([]byte(dashboardCSS))
+		contentType = "text/css"
+		content = []byte(dashboardCSS)
 	case path == "/dashboard.js":
-		w.Header().Set("Content-Type", "application/javascript")
-		w.Write([]byte(dashboardJS))
+		contentType = "application/javascript"
+		content = []byte(dashboardJS)
 	default:
 		http.NotFound(w, r)
+		return
+	}
+
+	w.Header().Set("Content-Type", contentType)
+	if _, err := w.Write(content); err != nil {
+		log.Printf("Failed to write static content for %s: %v", path, err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
 }
 
@@ -164,7 +177,10 @@ func (d *Dashboard) apiOverview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(overview)
+	if err := json.NewEncoder(w).Encode(overview); err != nil {
+		log.Printf("Failed to encode overview JSON: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
 }
 
 // apiStats returns statistics for sites
@@ -179,6 +195,8 @@ func (d *Dashboard) apiStats(w http.ResponseWriter, r *http.Request) {
 
 	siteName := r.URL.Query().Get("site")
 
+	w.Header().Set("Content-Type", "application/json")
+
 	if siteName != "" {
 		// Get stats for specific site
 		stats, err := d.storage.GetStats(siteName, since)
@@ -187,8 +205,10 @@ func (d *Dashboard) apiStats(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(stats)
+		if err := json.NewEncoder(w).Encode(stats); err != nil {
+			log.Printf("Failed to encode site stats JSON: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
 	} else {
 		// Get stats for all sites
 		allStats, err := d.storage.GetAllStats(since)
@@ -197,8 +217,10 @@ func (d *Dashboard) apiStats(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(allStats)
+		if err := json.NewEncoder(w).Encode(allStats); err != nil {
+			log.Printf("Failed to encode all stats JSON: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -241,7 +263,10 @@ func (d *Dashboard) apiHistory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(history)
+	if err := json.NewEncoder(w).Encode(history); err != nil {
+		log.Printf("Failed to encode history JSON: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
 }
 
 // apiSites returns list of monitored sites
@@ -257,7 +282,10 @@ func (d *Dashboard) apiSites(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(sites)
+	if err := json.NewEncoder(w).Encode(sites); err != nil {
+		log.Printf("Failed to encode sites JSON: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
 }
 
 // apiAlerts returns alert configuration status
@@ -281,7 +309,10 @@ func (d *Dashboard) apiAlerts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(alertStatus)
+	if err := json.NewEncoder(w).Encode(alertStatus); err != nil {
+		log.Printf("Failed to encode alert status JSON: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
 }
 
 // WebSocket handler for real-time updates
@@ -316,6 +347,7 @@ func (d *Dashboard) sendOverviewUpdate(conn *websocket.Conn) {
 	since := time.Now().Add(-24 * time.Hour)
 	allStats, err := d.storage.GetAllStats(since)
 	if err != nil {
+		log.Printf("Failed to get stats for WebSocket update: %v", err)
 		return
 	}
 
@@ -364,7 +396,9 @@ func (d *Dashboard) sendOverviewUpdate(conn *websocket.Conn) {
 		"data": overview,
 	}
 
-	conn.WriteJSON(message)
+	if err := conn.WriteJSON(message); err != nil {
+		log.Printf("Failed to send WebSocket message: %v", err)
+	}
 }
 
 // BroadcastUpdate sends updates to all connected WebSocket clients
