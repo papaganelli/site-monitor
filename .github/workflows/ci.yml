@@ -64,7 +64,7 @@ jobs:
 
   build:
     name: Build Binary
-    needs: [test]  # ← Plus de dépendance sur security
+    needs: [test]
     runs-on: ubuntu-latest
     
     steps:
@@ -98,12 +98,10 @@ jobs:
           -o site-monitor \
           .
         
-        # Test the binary
-        ./site-monitor --version 2>/dev/null || echo "✅ Binary built successfully"
-        
-        # Show binary info
+        # Verify binary properties
         ls -la site-monitor
         file site-monitor
+        echo "✅ Binary built successfully"
         
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
