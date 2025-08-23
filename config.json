@@ -1,7 +1,7 @@
 {
     "sites": [
         {
-            "name": "Site Principal",
+            "name": "Site Tir Sportif Saint Denis en Val",
             "url": "https://tirsportif-saintdenisenval.fr/",
             "interval": "30s",
             "timeout": "10s"

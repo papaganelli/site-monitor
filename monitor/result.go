@@ -19,13 +19,13 @@ type Result struct {
 func (r Result) String() string {
 	status := "✅ OK"
 	if !r.Success {
-		status = "❌ ERREUR"
+		status = "❌ ERROR" // ← Corrigé (pas de := car on réassigne)
 	}
 
-	return fmt.Sprintf("[%s] %s (%s) - Status: %d - Durée: %v",
+	return fmt.Sprintf("[%s] %s (%s) - Status: %d - Duration: %v",
 		r.Timestamp.Format("15:04:05"),
 		status,
-		r.Name, // Display the monitor name
+		r.Name,
 		r.Status,
 		r.Duration)
 }
