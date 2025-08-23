@@ -1,4 +1,3 @@
-```markdown
 # Site Monitor 🚀
 
 Un outil de surveillance de sites web simple et efficace écrit en Go.
