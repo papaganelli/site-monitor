@@ -1,14 +1,15 @@
 # Site Monitor 🚀
 
-Un outil de surveillance de sites web complet avec système d'alertes avancé et interface CLI, écrit en Go.
+Un outil de surveillance de sites web complet avec **dashboard web temps réel**, système d'alertes avancé et interface CLI, écrit en Go.
 
 ## ✨ Fonctionnalités
 
 - 🏃 **Surveillance multi-sites** avec goroutines concurrentes
 - 💾 **Stockage SQLite** avec historique complet des vérifications
 - 📊 **Statistiques détaillées** (uptime, temps de réponse, SLA)
+- 🌐 **Dashboard web moderne** avec graphiques temps réel et WebSocket
 - 🚨 **Système d'alertes intelligent** (Email, Webhook, Slack, Discord, Teams)
-- 🖥️  **CLI avancée** avec 4 commandes puissantes
+- 🖥️  **CLI avancée** avec 5 commandes puissantes
 - ⚡ **Monitoring temps réel** avec mode surveillance
 - 📋 **Configuration JSON** flexible et simple
 - 🎯 **Validation HTTP** avec codes de statut personnalisables
@@ -93,8 +94,8 @@ Créer un fichier `config.json` :
 # Démarrer la surveillance avec alertes (daemon)
 site-monitor run
 
-# Tester la configuration des alertes
-site-monitor alerts test
+# 🌐 NOUVEAU: Lancer le dashboard web
+site-monitor dashboard --port 8080
 
 # Voir les statistiques
 site-monitor stats
@@ -105,6 +106,42 @@ site-monitor history
 # Vérifier le statut actuel
 site-monitor status
 ```
+
+## 🌐 Dashboard Web - NOUVEAU !
+
+**Site Monitor v0.5.0** introduit un **dashboard web moderne** avec interface temps réel !
+
+### 🎯 **Fonctionnalités du Dashboard**
+
+- **📊 Vue d'ensemble temps réel** : Métriques globales et par site
+- **📈 Graphiques interactifs** : Tendances de temps de réponse et distribution uptime
+- **🔴 Statuts visuels** : Indicateurs colorés (Healthy/Degraded/Down/Stale)
+- **📋 Activité récente** : Stream en direct des vérifications
+- **⚡ WebSocket temps réel** : Mises à jour automatiques sans rechargement
+- **📱 Design responsive** : Optimisé mobile et desktop
+- **🌙 Mode sombre automatique** : S'adapte aux préférences système
+
+### 🚀 **Démarrer le Dashboard**
+
+```bash
+# Port par défaut (8080)
+site-monitor dashboard
+
+# Port personnalisé
+site-monitor dashboard --port 3000
+
+# Puis ouvrir dans le navigateur
+open http://localhost:8080
+```
+
+### 📸 **Aperçu du Dashboard**
+
+Le dashboard affiche :
+- **Cartes de résumé** : Sites totaux, sites sains, uptime global, vérifications totales
+- **Grille des sites** : Statut, uptime et temps de réponse par site
+- **Graphiques temps réel** : Tendances des temps de réponse sur 24h
+- **Activité live** : Stream des dernières vérifications avec statuts
+- **Indicateur de connexion** : WebSocket connecté/déconnecté
 
 ## 🚨 Système d'alertes
 
@@ -161,58 +198,9 @@ Support natif pour Slack, Discord, Microsoft Teams et webhooks génériques.
 - `teams` - MessageCards Microsoft Teams
 - `generic` - JSON personnalisable
 
-### Configuration des seuils
+## 🖥️ Interface CLI
 
-```json
-{
-  "thresholds": {
-    "consecutive_failures": 3,        // Alerter après 3 échecs consécutifs
-    "response_time_threshold": "5s",  // Alerter si réponse > 5 secondes
-    "uptime_threshold": 95.0,         // Alerter si uptime < 95%
-    "uptime_window": "24h",           // Période de calcul de l'uptime
-    "performance_window": "1h",       // Période d'analyse des performances
-    "alert_cooldown": "5m"            // Délai minimum entre alertes
-  }
-}
-```
-
-### Commandes d'alertes
-
-```bash
-# Tester la configuration des alertes
-site-monitor alerts test
-
-# Voir l'historique des alertes envoyées
-site-monitor alerts history
-
-# Tester un canal spécifique
-site-monitor alerts test --channel email
-site-monitor alerts test --channel webhook
-```
-
-### Exemple d'alerte Slack
-
-```
-🚨 SITE DOWN: API de Production is not responding
-
-Site: API de Production
-URL: https://api.monsite.com/health
-Severity: critical
-HTTP Status: 0
-Consecutive Failures: 3
-Error: context deadline exceeded
-```
-
-### Exemple d'email d'alerte
-
-Les emails incluent :
-- **Résumé visuel** avec icônes et couleurs
-- **Tableau détaillé** des métriques
-- **Recommandations d'actions** spécifiques au problème
-- **Liens directs** vers le site affecté
-- **Informations contextuelles** (ID d'alerte, timestamp, etc.)
-
-
+Site Monitor propose 5 commandes CLI pour une gestion complète :
 
 ### 🏃 **`run`** - Mode surveillance (par défaut)
 Démarre la surveillance continue de tous les sites configurés.
@@ -221,17 +209,20 @@ Démarre la surveillance continue de tous les sites configurés.
 site-monitor run        # ou simplement: site-monitor
 ```
 
-**Sortie :**
-```
-🚀 Starting monitoring for 2 sites
-💾 Database initialized: site-monitor.db
-📍 Starting Mon Site Principal (https://monsite.com) - checking every 30s
-📍 Starting API de Production (https://api.monsite.com/health) - checking every 60s
+### 🌐 **`dashboard`** - Dashboard web - NOUVEAU !
+Lance le serveur web avec interface graphique moderne.
 
-[14:30:25] ✅ OK (Mon Site Principal) - Status: 200 - Duration: 245ms
-[14:30:27] ✅ OK (API de Production) - Status: 200 - Duration: 89ms
-[14:31:25] ✅ OK (Mon Site Principal) - Status: 200 - Duration: 198ms
+```bash
+site-monitor dashboard                    # Port 8080 par défaut
+site-monitor dashboard --port 3000       # Port personnalisé
 ```
+
+**Fonctionnalités du dashboard :**
+- Interface web moderne et responsive
+- Graphiques temps réel avec Chart.js
+- WebSocket pour mises à jour automatiques
+- Vue d'ensemble et détails par site
+- Stream d'activité en direct
 
 ### 📊 **`stats`** - Statistiques détaillées
 Affiche les métriques de performance et de disponibilité.
@@ -241,29 +232,6 @@ site-monitor stats                           # Tous les sites (24h par défaut)
 site-monitor stats --since 1h               # Dernière heure
 site-monitor stats --since 7d               # 7 derniers jours
 site-monitor stats --site "Mon Site"        # Site spécifique
-```
-
-**Exemple de sortie :**
-```
-📊 Monitoring Statistics (Last 24 hours)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-✅ Mon Site Principal
-   📈 Uptime: 99.2% (1,432/1,444 checks)
-   ⚡ Response: 245ms avg (min: 89ms, max: 1.2s)
-   🕐 Last Check: 2 minutes ago
-   📅 Monitoring Duration: 24h
-
-⚠️ API de Production  
-   📈 Uptime: 97.8% (1,411/1,444 checks)
-   ⚡ Response: 156ms avg (min: 45ms, max: 2.1s)
-   🕐 Last Check: 1 minute ago
-   💥 Failed Checks: 33
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 Summary: 2 sites monitored
-🎯 Overall Uptime: 98.5% (2,843/2,888 checks)
-💚 Healthy Sites: 1/2 (≥99% uptime)
 ```
 
 ### 📋 **`history`** - Historique des vérifications
@@ -276,30 +244,6 @@ site-monitor history --site "Mon Site"      # Site spécifique
 site-monitor history --since 2h             # 2 dernières heures
 ```
 
-**Exemple de sortie :**
-```
-📋 Monitoring History (Last 24 hours) - Limited to 20 entries
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🌐 Mon Site Principal (15 entries)
-──────────────────────────────────────────────────────
-   [14:35:25] ✅ OK - 200 - 198ms
-   [14:34:55] ✅ OK - 200 - 201ms
-   [14:34:25] ❌ FAIL - 0 - 10s - context deadline exceeded
-   [14:33:55] ✅ OK - 200 - 187ms
-
-🌐 API de Production (5 entries)
-──────────────────────────────────────────────────────
-   [14:35:15] ✅ OK - 200 - 89ms
-   [14:34:15] ✅ OK - 200 - 92ms
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 Summary: 20 entries from 2 sites
-✅ Success Rate: 95.0% (19/20)
-⚡ Response Times: 168ms avg (min: 89ms, max: 10s)
-⏱️  Time Span: 1h15m
-```
-
 ### 🔍 **`status`** - Statut temps réel
 Affiche l'état actuel de tous les sites surveillés.
 
@@ -307,27 +251,6 @@ Affiche l'état actuel de tous les sites surveillés.
 site-monitor status                          # Aperçu unique
 site-monitor status --watch                 # Surveillance continue
 site-monitor status --watch --interval 10s  # Rafraîchi toutes les 10s
-```
-
-**Exemple de sortie :**
-```
-🚀 Site Monitor Status - 2025-08-23 14:35:42
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-✅ HEALTHY      Mon Site Principal
-   📈 Recent Success: 99.2% (143/144 checks)
-   ⚡ Response Time: 201ms avg
-   🕐 Last Check: 17 seconds ago
-
-⚠️ DEGRADED     API de Production
-   📈 Recent Success: 96.5% (138/143 checks)
-   ⚡ Response Time: 89ms avg
-   🕐 Last Check: 45 seconds ago
-   💥 Recent Failures: 5
-   🚨 Issues: Some failures
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 Overall: 1/2 sites healthy ⚠️ Some issues detected
 ```
 
 ### 📖 **`--help`** - Aide complète
@@ -384,7 +307,7 @@ site-monitor --version      # Version du logiciel
       "timeout": "30s",
       "retry_count": 3,
       "headers": {
-        "User-Agent": "SiteMonitor/0.4.0"
+        "User-Agent": "SiteMonitor/0.5.0"
       }
     },
     "thresholds": {
@@ -399,80 +322,6 @@ site-monitor --version      # Version du logiciel
 }
 ```
 
-| Champ | Description | Exemples | Obligatoire |
-|-------|-------------|----------|-------------|
-| `name` | Nom affiché dans les rapports et alertes | `"API Production"` | ✅ |
-| `url` | URL à surveiller | `"https://api.com/health"` | ✅ |
-| `interval` | Fréquence des vérifications | `"30s"`, `"5m"`, `"1h"` | ✅ |
-| `timeout` | Timeout des requêtes HTTP | `"10s"`, `"30s"` | ✅ |
-
-### Configuration des alertes
-
-| Section | Champ | Description | Exemple |
-|---------|-------|-------------|---------|
-| `email` | `enabled` | Activer les alertes email | `true` |
-| | `smtp_server` | Serveur SMTP | `"smtp.gmail.com"` |
-| | `smtp_port` | Port SMTP | `587` |
-| | `username` | Nom d'utilisateur SMTP | `"alerts@monsite.com"` |
-| | `password` | Mot de passe (app password recommandé) | `"abcd-efgh-ijkl-mnop"` |
-| | `recipients` | Liste des destinataires | `["admin@site.com"]` |
-| `webhook` | `enabled` | Activer les webhooks | `true` |
-| | `url` | URL du webhook | `"https://hooks.slack.com/..."` |
-| | `format` | Format des messages | `"slack"`, `"discord"`, `"teams"` |
-| | `retry_count` | Nombre de tentatives | `3` |
-| `thresholds` | `consecutive_failures` | Échecs avant alerte | `3` |
-| | `response_time_threshold` | Seuil de lenteur | `"5s"` |
-| | `uptime_threshold` | Seuil d'uptime (%) | `95.0` |
-| | `alert_cooldown` | Délai entre alertes | `"5m"` |
-
-### Exemples de configurations
-
-#### Configuration basique
-```json
-{
-  "sites": [
-    {
-      "name": "Site Web",
-      "url": "https://monsite.com",
-      "interval": "60s",
-      "timeout": "15s"
-    }
-  ]
-}
-```
-
-#### Configuration multi-environnements
-```json
-{
-  "sites": [
-    {
-      "name": "Production - Site Principal",
-      "url": "https://monsite.com",
-      "interval": "30s",
-      "timeout": "10s"
-    },
-    {
-      "name": "Production - API",
-      "url": "https://api.monsite.com/health",
-      "interval": "60s",
-      "timeout": "5s"
-    },
-    {
-      "name": "Staging - API",
-      "url": "https://staging-api.monsite.com/health",
-      "interval": "5m",
-      "timeout": "15s"
-    },
-    {
-      "name": "Service de Paiement",
-      "url": "https://payments.monsite.com/status",
-      "interval": "2m",
-      "timeout": "20s"
-    }
-  ]
-}
-```
-
 ## 💾 Base de données et stockage
 
 Site Monitor utilise SQLite pour stocker l'historique complet :
@@ -481,17 +330,6 @@ Site Monitor utilise SQLite pour stocker l'historique complet :
 - **Schéma optimisé** avec indexes pour les performances
 - **Concurrence sûre** pour les accès multiples
 - **Mode WAL** pour de meilleures performances
-
-### Requêtes manuelles (optionnel)
-```bash
-# Examiner la base de données
-sqlite3 site-monitor.db
-
-# Quelques requêtes utiles
-.schema                                    # Structure des tables
-SELECT COUNT(*) FROM results;             # Nombre total de vérifications
-SELECT * FROM results ORDER BY timestamp DESC LIMIT 10;  # 10 dernières vérifications
-```
 
 ## 🔧 Développement
 
@@ -531,6 +369,7 @@ make run            # Lancer en mode surveillance
 make stats          # Voir les statistiques
 make history        # Voir l'historique  
 make status         # Voir le statut
+make dashboard      # Lancer le dashboard web
 make clean          # Nettoyer les artifacts
 make install        # Installer globalement
 make demo           # Démonstration CLI
@@ -584,35 +423,38 @@ sudo systemctl status site-monitor
 
 ## 🚀 Roadmap
 
-### ✅ Version 0.4.0 (Actuelle)
+### ✅ Version 0.5.0 (Actuelle)
+- ✅ **Dashboard web moderne** avec interface graphique complète
+- ✅ **WebSocket temps réel** pour mises à jour automatiques
+- ✅ **Graphiques interactifs** (Chart.js) - temps de réponse et uptime
+- ✅ **Design responsive** optimisé mobile et desktop
+- ✅ **API REST complète** pour intégrations tierces
 - ✅ Système d'alertes complet (Email, Webhook)
 - ✅ Support Slack, Discord, Microsoft Teams
 - ✅ Seuils configurables et logique intelligente
 - ✅ Templates d'emails HTML riches
-- ✅ Gestion des retry et cooldown anti-spam
-- ✅ CLI avancée avec 4 commandes
+- ✅ CLI avancée avec 5 commandes
 - ✅ Stockage SQLite complet
-- ✅ Statistiques détaillées
 
-### 🔮 Version 0.5.0 (Prochaine)
-- [ ] 🌐 Dashboard web avec graphiques temps réel
-- [ ] 📊 Export des données (JSON, CSV, API REST)
-- [ ] 🔔 Notifications push et intégrations mobiles
-- [ ] 📈 Métriques avancées (p95, p99, MTTR, MTBF)
-- [ ] 🎨 Templates d'alertes personnalisables
+### 🔮 Version 0.6.0 (Prochaine)
+- [ ] 📊 **Export des données** (JSON, CSV, API REST étendue)
+- [ ] 🔔 **Notifications push** et intégrations mobiles
+- [ ] 📈 **Métriques avancées** (p95, p99, MTTR, MTBF)
+- [ ] 🎨 **Templates d'alertes** personnalisables
+- [ ] 🛡️  **Vérifications SSL/TLS** et monitoring certificats
 
-### 🔮 Version 0.6.0
-- [ ] 🐳 Support Docker et Kubernetes complet
-- [ ] ☁️  Déploiement cloud (AWS, GCP, Azure)
-- [ ] 🔗 Intégrations (Grafana, Prometheus, DataDog)
-- [ ] 🛡️  Vérifications SSL/TLS et certificats
-- [ ] 🌍 Monitoring multi-régions et géo-distribué
+### 🔮 Version 0.7.0
+- [ ] 🐳 **Support Docker et Kubernetes** complet
+- [ ] ☁️  **Déploiement cloud** (AWS, GCP, Azure)
+- [ ] 🔗 **Intégrations** (Grafana, Prometheus, DataDog)
+- [ ] 🌍 **Monitoring multi-régions** et géo-distribué
+- [ ] 📱 **Application mobile** companion
 
 ## 🤝 Contribution
 
 1. **Fork** le projet
 2. **Créer** une branche (`git checkout -b feature/nouvelle-fonctionnalite`)
-3. **Committer** (`git commit -m 'feat: ajouter nouvelle fonctionnalité'`)
+3. **Committer** (`git commit -m 'feat: ajouter dashboard web moderne'`)
 4. **Push** (`git push origin feature/nouvelle-fonctionnalite`)
 5. **Ouvrir** une Pull Request
 
@@ -632,7 +474,8 @@ site-monitor/
 │   ├── app.go                # Structure principale CLI
 │   ├── stats.go              # Commande statistiques
 │   ├── history.go            # Commande historique
-│   └── status.go             # Commande statut
+│   ├── status.go             # Commande statut
+│   └── dashboard.go          # Commande dashboard web
 ├── config/
 │   └── config.go             # Configuration (sites + alertes)
 ├── monitor/
@@ -646,6 +489,10 @@ site-monitor/
 │   ├── manager.go            # Gestionnaire central d'alertes
 │   ├── email.go              # Canal d'alerte email (SMTP)
 │   └── webhook.go            # Canal webhook (Slack/Discord/Teams)
+├── web/                      # Dashboard web - NOUVEAU !
+│   ├── server.go             # Serveur HTTP et API REST
+│   ├── dashboard.go          # Templates HTML/CSS/JS
+│   └── types.go              # Types pour API REST
 ├── config.json               # Configuration des sites et alertes
 └── site-monitor.db           # Base SQLite (auto-créée)
 ```
@@ -661,6 +508,16 @@ Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de
 - 📖 **Documentation** : [Wiki](https://github.com/papaganelli/site-monitor/wiki)
 
 ## 📈 Changelog
+
+### v0.5.0 - Dashboard Web Moderne 🌐
+- 🌐 **Dashboard web complet** avec interface graphique moderne et responsive
+- ⚡ **WebSocket temps réel** pour mises à jour automatiques sans rechargement
+- 📊 **Graphiques interactifs** (Chart.js) - tendances temps de réponse et distribution uptime
+- 📱 **Design responsive** optimisé pour mobile et desktop avec mode sombre
+- 🔗 **API REST complète** (/api/overview, /api/stats, /api/history, /api/sites, /api/alerts)
+- 🎨 **Interface utilisateur moderne** avec animations, toasts et indicateurs visuels
+- 🚀 **Commande dashboard** ajoutée : `site-monitor dashboard --port 8080`
+- 🛡️  **Gestion d'erreurs améliorée** dans toutes les couches (HTTP, WebSocket, JSON)
 
 ### v0.4.0 - Système d'Alertes Intelligent
 - 🚨 **Système d'alertes complet** avec 4 types d'alertes automatiques
