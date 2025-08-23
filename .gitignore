@@ -1,23 +1,15 @@
-# Binaries
+# Binary
 site-monitor
-*.exe
-*.dll
-*.so
-*.dylib
 
-# Test binary, built with `go test -c`
+# Test artifacts
 *.test
-
-# Output of the go coverage tool
 *.out
+coverage.html
 
-# Go workspace file
+# Go workspace
 go.work
 
-# Config files with sensitive data (optional)
-# config.json
-
-# Logs and data files
+# Logs and data
 logs/
 *.log
 results.json
