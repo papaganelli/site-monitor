@@ -1,0 +1,10 @@
+{
+    "sites": [
+        {
+            "name": "Site Principal",
+            "url": "https://tirsportif-saintdenisenval.fr/",
+            "interval": "30s",
+            "timeout": "10s"
+        }
+    ]
+}
