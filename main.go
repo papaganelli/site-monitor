@@ -86,6 +86,7 @@ func showUsage() {
 	fmt.Println("  stats [options]         Show monitoring statistics")
 	fmt.Println("  history [options]       Show monitoring history")
 	fmt.Println("  status [options]        Show current status")
+	fmt.Println("  dashboard [options]     Start web dashboard")
 	fmt.Println()
 	fmt.Println("STATS OPTIONS:")
 	fmt.Println("  --site <name>           Show stats for specific site")

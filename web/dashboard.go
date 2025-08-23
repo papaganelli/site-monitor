@@ -768,9 +768,8 @@ body {
     background: var(--text-secondary);
 }`
 
-// dashboardJS contains the JavaScript code for dashboard functionality
-const dashboardJS = `
-// Dashboard JavaScript
+// dashboardJS contains the JavaScript code with the corrected version
+const dashboardJS = `// Dashboard JavaScript - Version corrigée
 class SiteMonitorDashboard {
     constructor() {
         this.ws = null;
@@ -839,9 +838,9 @@ class SiteMonitorDashboard {
     attemptReconnect() {
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
             this.reconnectAttempts++;
-            const delay = Math.pow(2, this.reconnectAttempts) * 1000; // Exponential backoff
+            const delay = Math.pow(2, this.reconnectAttempts) * 1000;
             
-            console.log('Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})');
+            console.log('Attempting to reconnect in ' + delay + 'ms (attempt ' + this.reconnectAttempts + ')');
             
             setTimeout(() => {
                 this.initWebSocket();
@@ -853,7 +852,7 @@ class SiteMonitorDashboard {
     
     handleWebSocketMessage(message) {
         switch (message.type) {
-            case series_update':
+            case 'overview_update':
                 this.updateOverview(message.data);
                 this.updateSitesGrid(message.data.sites);
                 this.updateCharts();
@@ -902,26 +901,25 @@ class SiteMonitorDashboard {
         
         const lastCheckTime = this.formatTimeAgo(new Date(site.last_check));
         
-        card.innerHTML = '
-            <div class="site-header">
-                <div class="site-name">${this.escapeHtml(site.name)}</div>
-                <div class="site-status ${site.status}">${site.status}</div>
-            </div>
-            <div class="site-metrics">
-                <div class="metric">
-                    <div class="metric-value">${site.uptime.toFixed(1)}%</div>
-                    <div class="metric-label">Uptime</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-value">${site.response_time_ms}ms</div>
-                    <div class="metric-label">Response Time</div>
-                </div>
-            </div>
-            <div class="site-footer">
-                <small class="last-check">Last check: ${lastCheckTime}</small>
-            </div>
-            <div class="site-chart"></div>
-        ';
+        card.innerHTML = '' +
+            '<div class="site-header">' +
+                '<div class="site-name">' + this.escapeHtml(site.name) + '</div>' +
+                '<div class="site-status ' + site.status + '">' + site.status + '</div>' +
+            '</div>' +
+            '<div class="site-metrics">' +
+                '<div class="metric">' +
+                    '<div class="metric-value">' + site.uptime.toFixed(1) + '%</div>' +
+                    '<div class="metric-label">Uptime</div>' +
+                '</div>' +
+                '<div class="metric">' +
+                    '<div class="metric-value">' + site.response_time_ms + 'ms</div>' +
+                    '<div class="metric-label">Response Time</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="site-footer">' +
+                '<small class="last-check">Last check: ' + lastCheckTime + '</small>' +
+            '</div>' +
+            '<div class="site-chart"></div>';
         
         return card;
     }
@@ -1002,9 +1000,9 @@ class SiteMonitorDashboard {
                     datasets: [{
                         data: chartData.data,
                         backgroundColor: [
-                            '#059669', // Success
-                            '#dc2626', // Error
-                            '#d97706'  // Warning
+                            '#059669',
+                            '#dc2626',
+                            '#d97706'
                         ],
                         borderWidth: 0,
                         hoverOffset: 4
@@ -1036,13 +1034,13 @@ class SiteMonitorDashboard {
             }
             siteData[entry.site_name].push({
                 x: entry.timestamp,
-                y: entry.duration / 1000000 // Convert from nanoseconds to milliseconds
+                y: entry.duration / 1000000
             });
         });
         
         const datasets = Object.keys(siteData).map((siteName, index) => ({
             label: siteName,
-            data: siteData[siteName].slice(-50), // Last 50 points
+            data: siteData[siteName].slice(-50),
             borderColor: colors[index % colors.length],
             backgroundColor: colors[index % colors.length] + '20',
             tension: 0.4,
@@ -1050,7 +1048,7 @@ class SiteMonitorDashboard {
         }));
         
         return {
-            labels: [], // Chart.js will handle time labels automatically
+            labels: [],
             datasets
         };
     }
@@ -1077,7 +1075,6 @@ class SiteMonitorDashboard {
     
     async updateCharts() {
         try {
-            // Update response time chart
             if (this.charts.responseTime) {
                 const history = await fetch('/api/history?since=24h&limit=100').then(r => r.json());
                 const chartData = this.processResponseTimeData(history);
@@ -1085,7 +1082,6 @@ class SiteMonitorDashboard {
                 this.charts.responseTime.update('none');
             }
             
-            // Update uptime chart
             if (this.charts.uptime) {
                 const stats = await fetch('/api/stats').then(r => r.json());
                 const chartData = this.processUptimeData(stats);
@@ -1101,7 +1097,6 @@ class SiteMonitorDashboard {
         const activityList = document.getElementById('activity-list');
         activityList.innerHTML = '';
         
-        // Show last 20 activities
         const recentHistory = history.slice(0, 20);
         
         if (recentHistory.length === 0) {
@@ -1123,32 +1118,29 @@ class SiteMonitorDashboard {
         const statusText = entry.success ? 'UP' : 'DOWN';
         const timeAgo = this.formatTimeAgo(new Date(entry.timestamp));
         
-        let details = 'Response time: ${Math.round(entry.duration / 1000000)}ms';
+        let details = 'Response time: ' + Math.round(entry.duration / 1000000) + 'ms';
         if (!entry.success && entry.error) {
-            details = 'Error: ${entry.error}';
+            details = 'Error: ' + entry.error;
         }
         
-        item.innerHTML = '
-            <div class="activity-icon ${iconClass}"></div>
-            <div class="activity-content">
-                <div class="activity-message">${this.escapeHtml(entry.site_name)} is ${statusText}</div>
-                <div class="activity-details">${this.escapeHtml(details)}</div>
-            </div>
-            <div class="activity-time">${timeAgo}</div>
-        ';
+        item.innerHTML = '' +
+            '<div class="activity-icon ' + iconClass + '"></div>' +
+            '<div class="activity-content">' +
+                '<div class="activity-message">' + this.escapeHtml(entry.site_name) + ' is ' + statusText + '</div>' +
+                '<div class="activity-details">' + this.escapeHtml(details) + '</div>' +
+            '</div>' +
+            '<div class="activity-time">' + timeAgo + '</div>';
         
         return item;
     }
     
     startPeriodicUpdates() {
-        // Update data every 30 seconds
         setInterval(async () => {
             try {
                 const overview = await fetch('/api/overview').then(r => r.json());
                 this.updateOverview(overview);
                 this.updateSitesGrid(overview.sites);
                 
-                // Update activity feed every minute
                 if (!this.lastActivityUpdate || Date.now() - this.lastActivityUpdate > 60000) {
                     const history = await fetch('/api/history?limit=20').then(r => r.json());
                     this.updateActivityFeed(history);
@@ -1166,10 +1158,11 @@ class SiteMonitorDashboard {
         overlay.classList.add('hidden');
     }
     
-    showToast(message, type = 'info') {
+    showToast(message, type) {
+        type = type || 'info';
         const container = document.getElementById('toast-container');
         const toast = document.createElement('div');
-        toast.className = 'toast ${type}';
+        toast.className = 'toast ' + type;
         
         const icons = {
             success: '✅',
@@ -1178,17 +1171,17 @@ class SiteMonitorDashboard {
             info: 'ℹ️'
         };
         
-        toast.innerHTML = '
-            <div class="toast-icon">${icons[type] || icons.info}</div>
-            <div class="toast-message">${this.escapeHtml(message)}</div>
-            <button class="toast-close" onclick="this.parentElement.remove()">×</button>
-        ';
+        toast.innerHTML = '' +
+            '<div class="toast-icon">' + (icons[type] || icons.info) + '</div>' +
+            '<div class="toast-message">' + this.escapeHtml(message) + '</div>' +
+            '<button class="toast-close" onclick="this.parentElement.remove()">×</button>';
         
         container.appendChild(toast);
         
-        // Auto-remove after 5 seconds
         setTimeout(() => {
-            toast.remove();
+            if (toast.parentNode) {
+                toast.remove();
+            }
         }, 5000);
     }
     
@@ -1222,12 +1215,10 @@ class SiteMonitorDashboard {
     }
 }
 
-// Global functions
 function refreshData() {
     window.dashboard.loadInitialData();
     window.dashboard.updateCharts();
     
-    // Visual feedback
     const refreshBtn = document.querySelector('.btn-refresh');
     const icon = refreshBtn.querySelector('.refresh-icon');
     icon.style.transform = 'rotate(360deg)';
@@ -1236,8 +1227,6 @@ function refreshData() {
     }, 500);
 }
 
-// Initialize dashboard when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.dashboard = new SiteMonitorDashboard();
-});
-`
+});`
