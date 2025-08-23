@@ -1,18 +1,250 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"site-monitor/cmd"
 	"site-monitor/config"
 	"site-monitor/monitor"
 	"site-monitor/storage"
+	"strconv"
+	"strings"
 	"sync"
 	"syscall"
+	"time"
 )
 
 func main() {
+	// Define command line flags
+	var (
+		showHelp    = flag.Bool("help", false, "Show help message")
+		showVersion = flag.Bool("version", false, "Show version information")
+	)
+
+	// Parse command line arguments
+	flag.Parse()
+	args := flag.Args()
+
+	// Show help
+	if *showHelp || (len(args) == 0 && len(os.Args) == 1) {
+		showUsage()
+		return
+	}
+
+	// Show version
+	if *showVersion {
+		fmt.Println("Site Monitor v0.3.0")
+		return
+	}
+
+	if len(args) == 0 {
+		// Default behavior: run the monitor
+		runMonitor()
+		return
+	}
+
+	// Handle subcommands
+	command := args[0]
+	commandArgs := args[1:]
+
+	app, err := cmd.NewCLIApp()
+	if err != nil {
+		log.Fatal("Failed to initialize CLI app:", err)
+	}
+
+	switch command {
+	case "run", "monitor":
+		runMonitor()
+	case "stats":
+		runStatsCommand(app, commandArgs)
+	case "history":
+		runHistoryCommand(app, commandArgs)
+	case "status":
+		runStatusCommand(app, commandArgs)
+	default:
+		fmt.Printf("Unknown command: %s\n", command)
+		fmt.Println()
+		showUsage()
+		os.Exit(1)
+	}
+}
+
+// showUsage displays the help message
+func showUsage() {
+	fmt.Println("Site Monitor - Website monitoring tool")
+	fmt.Println()
+	fmt.Println("USAGE:")
+	fmt.Println("  site-monitor [command] [options]")
+	fmt.Println()
+	fmt.Println("COMMANDS:")
+	fmt.Println("  run                     Start monitoring (default)")
+	fmt.Println("  stats [options]         Show monitoring statistics")
+	fmt.Println("  history [options]       Show monitoring history")
+	fmt.Println("  status [options]        Show current status")
+	fmt.Println()
+	fmt.Println("STATS OPTIONS:")
+	fmt.Println("  --site <name>           Show stats for specific site")
+	fmt.Println("  --since <duration>      Time period (e.g., 1h, 24h, 7d)")
+	fmt.Println()
+	fmt.Println("HISTORY OPTIONS:")
+	fmt.Println("  --site <name>           Show history for specific site")
+	fmt.Println("  --since <duration>      Time period (e.g., 1h, 24h)")
+	fmt.Println("  --limit <number>        Limit number of entries")
+	fmt.Println()
+	fmt.Println("STATUS OPTIONS:")
+	fmt.Println("  --watch                 Watch status with auto-refresh")
+	fmt.Println("  --interval <duration>   Refresh interval (default: 30s)")
+	fmt.Println()
+	fmt.Println("EXAMPLES:")
+	fmt.Println("  site-monitor run")
+	fmt.Println("  site-monitor stats --since 24h")
+	fmt.Println("  site-monitor stats --site \"My Site\"")
+	fmt.Println("  site-monitor history --limit 50")
+	fmt.Println("  site-monitor status --watch")
+}
+
+// runStatsCommand handles the stats subcommand
+func runStatsCommand(app *cmd.CLIApp, args []string) {
+	var siteName string
+	var sinceStr string
+
+	// Parse arguments
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--site":
+			if i+1 < len(args) {
+				siteName = args[i+1]
+				i++
+			}
+		case "--since":
+			if i+1 < len(args) {
+				sinceStr = args[i+1]
+				i++
+			}
+		}
+	}
+
+	// Parse duration
+	since := 24 * time.Hour // Default to 24 hours
+	if sinceStr != "" {
+		var err error
+		since, err = parseDuration(sinceStr)
+		if err != nil {
+			log.Fatalf("Invalid duration '%s': %v", sinceStr, err)
+		}
+	}
+
+	opts := cmd.StatsOptions{
+		SiteName: siteName,
+		Since:    since,
+	}
+
+	if err := app.ShowStats(opts); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// runHistoryCommand handles the history subcommand
+func runHistoryCommand(app *cmd.CLIApp, args []string) {
+	var siteName string
+	var sinceStr string
+	var limitStr string
+
+	// Parse arguments
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--site":
+			if i+1 < len(args) {
+				siteName = args[i+1]
+				i++
+			}
+		case "--since":
+			if i+1 < len(args) {
+				sinceStr = args[i+1]
+				i++
+			}
+		case "--limit":
+			if i+1 < len(args) {
+				limitStr = args[i+1]
+				i++
+			}
+		}
+	}
+
+	// Parse duration
+	since := 24 * time.Hour // Default to 24 hours
+	if sinceStr != "" {
+		var err error
+		since, err = parseDuration(sinceStr)
+		if err != nil {
+			log.Fatalf("Invalid duration '%s': %v", sinceStr, err)
+		}
+	}
+
+	// Parse limit
+	limit := 0
+	if limitStr != "" {
+		var err error
+		limit, err = strconv.Atoi(limitStr)
+		if err != nil {
+			log.Fatalf("Invalid limit '%s': %v", limitStr, err)
+		}
+	}
+
+	opts := cmd.HistoryOptions{
+		SiteName: siteName,
+		Since:    since,
+		Limit:    limit,
+	}
+
+	if err := app.ShowHistory(opts); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// runStatusCommand handles the status subcommand
+func runStatusCommand(app *cmd.CLIApp, args []string) {
+	var watch bool
+	var intervalStr string
+
+	// Parse arguments
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--watch":
+			watch = true
+		case "--interval":
+			if i+1 < len(args) {
+				intervalStr = args[i+1]
+				i++
+			}
+		}
+	}
+
+	// Parse interval
+	interval := 30 * time.Second // Default to 30 seconds
+	if intervalStr != "" {
+		var err error
+		interval, err = parseDuration(intervalStr)
+		if err != nil {
+			log.Fatalf("Invalid interval '%s': %v", intervalStr, err)
+		}
+	}
+
+	opts := cmd.StatusOptions{
+		Watch:    watch,
+		Interval: interval,
+	}
+
+	if err := app.ShowStatus(opts); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// runMonitor runs the original monitoring daemon
+func runMonitor() {
 	// Load configuration from file
 	cfg, err := config.Load("config.json")
 	if err != nil {
@@ -83,4 +315,20 @@ func main() {
 	}()
 
 	wg.Wait()
+}
+
+// parseDuration parses duration strings like "1h", "30m", "24h", "7d"
+func parseDuration(s string) (time.Duration, error) {
+	// Handle days (Go's time.ParseDuration doesn't support 'd')
+	if strings.HasSuffix(s, "d") {
+		daysStr := strings.TrimSuffix(s, "d")
+		days, err := strconv.Atoi(daysStr)
+		if err != nil {
+			return 0, fmt.Errorf("invalid number of days: %s", daysStr)
+		}
+		return time.Duration(days) * 24 * time.Hour, nil
+	}
+
+	// Use standard time.ParseDuration for other units
+	return time.ParseDuration(s)
 }
