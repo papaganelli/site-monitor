@@ -7,11 +7,11 @@ on:
   pull_request:
     branches: [ main ]
 
-# ✅ AJOUT : Permissions explicites pour le token
+# ✅ ADD: Explicit permissions for the token
 permissions:
-  contents: write  # Nécessaire pour créer des releases
-  packages: write  # Optionnel, pour les packages
-  actions: read    # Pour lire les artifacts
+  contents: write  # Required for creating releases
+  packages: write  # Optional, for packages
+  actions: read    # To read artifacts
 
 env:
   GO_VERSION: '1.21'
@@ -122,7 +122,7 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     
-    # ✅ AJOUT : Permissions explicites pour ce job
+    # ✅ ADD: Explicit permissions for this job
     permissions:
       contents: write
       actions: read
@@ -144,7 +144,7 @@ jobs:
         cat site-monitor.sha256
         
     - name: Create Release
-      uses: softprops/action-gh-release@v2  # ✅ Version plus récente
+      uses: softprops/action-gh-release@v2  # ✅ More recent version
       with:
         files: |
           site-monitor
@@ -153,51 +153,51 @@ jobs:
         draft: false
         prerelease: ${{ contains(github.ref, '-') }}
         body: |
-          ## 🚀 Site Monitor v${{ github.ref_name }}
+          ## 🚀 Site Monitor ${{ github.ref_name }}
           
-          Première release stable du moniteur de sites web !
+          First stable release of the website monitor!
           
-          ## 🎯 Fonctionnalités
-          - ✅ Surveillance multi-sites concurrent
-          - ⚙️ Configuration JSON flexible
-          - 🕐 Timeouts et intervalles personnalisables
-          - 📊 Affichage temps réel dans la console
-          - 🔍 Validation des codes de statut HTTP
+          ## 🎯 Features
+          - ✅ Concurrent multi-site monitoring
+          - ⚙️ Flexible JSON configuration
+          - 🕐 Customizable timeouts and intervals
+          - 📊 Real-time console output
+          - 🔍 HTTP status code validation
           
-          ## 🐧 Installation Linux
+          ## 🐧 Linux Installation
           
-          ### Téléchargement direct
+          ### Direct download
           ```bash
-          # Télécharger le binaire
+          # Download binary
           wget https://github.com/${{ github.repository }}/releases/latest/download/site-monitor
           
-          # Rendre exécutable
+          # Make executable
           chmod +x site-monitor
           
-          # Installer globalement (optionnel)
+          # Install globally (optional)
           sudo mv site-monitor /usr/local/bin/
           
-          # Ou lancer localement
+          # Or run locally
           ./site-monitor
           ```
           
-          ### Vérification d'intégrité
+          ### Integrity verification
           ```bash
-          # Télécharger la somme de contrôle
+          # Download checksum
           wget https://github.com/${{ github.repository }}/releases/latest/download/site-monitor.sha256
           
-          # Vérifier
+          # Verify
           sha256sum -c site-monitor.sha256
           ```
           
           ## 🔧 Configuration
           
-          Créez un fichier `config.json` :
+          Create a `config.json` file:
           ```json
           {
             "sites": [
               {
-                "name": "Mon Site",
+                "name": "My Site",
                 "url": "https://example.com",
                 "interval": "30s",
                 "timeout": "10s"
@@ -206,6 +206,6 @@ jobs:
           }
           ```
           
-          Puis lancez : `./site-monitor`
+          Then run: `./site-monitor`
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
