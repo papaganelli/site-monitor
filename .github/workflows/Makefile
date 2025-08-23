@@ -1,4 +1,4 @@
-.PHONY: build test clean run fmt lint help install stats history status demo
+.PHONY: build test clean run fmt lint help install stats history status dashboard demo
 
 # Variables
 BINARY_NAME=site-monitor
@@ -42,6 +42,10 @@ status: build ## Show current monitoring status
 	@echo "Showing current status..."
 	@./$(BINARY_NAME) status
 
+dashboard: build ## Start web dashboard
+	@echo "Starting web dashboard..."
+	@./$(BINARY_NAME) dashboard
+
 demo: build ## Run a quick demo of all CLI commands
 	@echo "🚀 Site Monitor CLI Demo"
 	@echo ""
@@ -56,6 +60,9 @@ demo: build ## Run a quick demo of all CLI commands
 	@echo ""
 	@echo "🔍 Status (if data available):"
 	@./$(BINARY_NAME) status 2>/dev/null || echo "   No data yet - run 'make run' first"
+	@echo ""
+	@echo "🌐 Dashboard:"
+	@echo "   Run 'make dashboard' to start the web interface"
 
 fmt: ## Format Go code
 	@echo "Formatting code..."
@@ -75,6 +82,7 @@ install: build ## Install binary to /usr/local/bin
 	@echo "  site-monitor stats    # View statistics"
 	@echo "  site-monitor history  # View history"
 	@echo "  site-monitor status   # View current status"
+	@echo "  site-monitor dashboard # Start web dashboard"
 
 uninstall: ## Remove binary from /usr/local/bin
 	@echo "Removing $(BINARY_NAME) from /usr/local/bin..."

@@ -36,7 +36,7 @@ func main() {
 
 	// Show version
 	if *showVersion {
-		fmt.Println("Site Monitor v0.4.0")
+		fmt.Println("Site Monitor v0.5.0")
 		return
 	}
 
@@ -64,6 +64,8 @@ func main() {
 		runHistoryCommand(app, commandArgs)
 	case "status":
 		runStatusCommand(app, commandArgs)
+	case "dashboard", "web":
+		runDashboardCommand(app, commandArgs)
 	default:
 		fmt.Printf("Unknown command: %s\n", command)
 		fmt.Println()
@@ -98,12 +100,16 @@ func showUsage() {
 	fmt.Println("  --watch                 Watch status with auto-refresh")
 	fmt.Println("  --interval <duration>   Refresh interval (default: 30s)")
 	fmt.Println()
+	fmt.Println("DASHBOARD OPTIONS:")
+	fmt.Println("  --port <number>         Web server port (default: 8080)")
+	fmt.Println()
 	fmt.Println("EXAMPLES:")
 	fmt.Println("  site-monitor run")
 	fmt.Println("  site-monitor stats --since 24h")
 	fmt.Println("  site-monitor stats --site \"My Site\"")
 	fmt.Println("  site-monitor history --limit 50")
 	fmt.Println("  site-monitor status --watch")
+	fmt.Println("  site-monitor dashboard --port 3000")
 }
 
 // runStatsCommand handles the stats subcommand
@@ -239,6 +245,40 @@ func runStatusCommand(app *cmd.CLIApp, args []string) {
 	}
 
 	if err := app.ShowStatus(opts); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// runDashboardCommand handles the dashboard subcommand
+func runDashboardCommand(app *cmd.CLIApp, args []string) {
+	var portStr string
+
+	// Parse arguments
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--port":
+			if i+1 < len(args) {
+				portStr = args[i+1]
+				i++
+			}
+		}
+	}
+
+	// Parse port
+	port := 8080 // Default port
+	if portStr != "" {
+		var err error
+		port, err = strconv.Atoi(portStr)
+		if err != nil || port < 1 || port > 65535 {
+			log.Fatalf("Invalid port '%s': must be between 1 and 65535", portStr)
+		}
+	}
+
+	opts := cmd.DashboardOptions{
+		Port: port,
+	}
+
+	if err := app.ShowDashboard(opts); err != nil {
 		log.Fatal(err)
 	}
 }
