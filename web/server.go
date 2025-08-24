@@ -85,32 +85,6 @@ func (d *Dashboard) serveDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// serveStatic serves static files (CSS, JS, etc.)
-func (d *Dashboard) serveStatic(w http.ResponseWriter, r *http.Request) {
-	path := r.URL.Path
-
-	var content []byte
-	var contentType string
-
-	switch {
-	case path == "/dashboard.css":
-		contentType = "text/css"
-		content = []byte(dashboardCSS)
-	case path == "/dashboard.js":
-		contentType = "application/javascript"
-		content = []byte(dashboardJS)
-	default:
-		http.NotFound(w, r)
-		return
-	}
-
-	w.Header().Set("Content-Type", contentType)
-	if _, err := w.Write(content); err != nil {
-		log.Printf("Failed to write static content for %s: %v", path, err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-	}
-}
-
 // API Handlers
 
 // apiOverview returns overall system statistics
