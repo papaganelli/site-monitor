@@ -36,7 +36,7 @@ func main() {
 
 	// Show version
 	if *showVersion {
-		fmt.Println("Site Monitor v0.5.0")
+		fmt.Println("Site Monitor v0.6.0")
 		return
 	}
 
@@ -66,6 +66,8 @@ func main() {
 		runStatusCommand(app, commandArgs)
 	case "dashboard", "web":
 		runDashboardCommand(app, commandArgs)
+	case "export":
+		runExportCommand(app, commandArgs)
 	default:
 		fmt.Printf("Unknown command: %s\n", command)
 		fmt.Println()
@@ -87,6 +89,7 @@ func showUsage() {
 	fmt.Println("  history [options]       Show monitoring history")
 	fmt.Println("  status [options]        Show current status")
 	fmt.Println("  dashboard [options]     Start web dashboard")
+	fmt.Println("  export [options]        Export monitoring data")
 	fmt.Println()
 	fmt.Println("STATS OPTIONS:")
 	fmt.Println("  --site <name>           Show stats for specific site")
@@ -104,6 +107,15 @@ func showUsage() {
 	fmt.Println("DASHBOARD OPTIONS:")
 	fmt.Println("  --port <number>         Web server port (default: 8080)")
 	fmt.Println()
+	fmt.Println("EXPORT OPTIONS:")
+	fmt.Println("  --format <format>       Export format (json, csv, html)")
+	fmt.Println("  --site <name>           Export data for specific site")
+	fmt.Println("  --since <duration>      Time period to export")
+	fmt.Println("  --output <file>         Output file path")
+	fmt.Println("  --stats                 Include statistics")
+	fmt.Println("  --stdout                Output to stdout")
+	fmt.Println("  --list-formats          Show available formats")
+	fmt.Println()
 	fmt.Println("EXAMPLES:")
 	fmt.Println("  site-monitor run")
 	fmt.Println("  site-monitor stats --since 24h")
@@ -111,6 +123,9 @@ func showUsage() {
 	fmt.Println("  site-monitor history --limit 50")
 	fmt.Println("  site-monitor status --watch")
 	fmt.Println("  site-monitor dashboard --port 3000")
+	fmt.Println("  site-monitor export --format json --output data.json")
+	fmt.Println("  site-monitor export --format csv --site \"My Site\" --since 7d")
+	fmt.Println("  site-monitor export --format html --stats")
 }
 
 // runStatsCommand handles the stats subcommand
@@ -282,6 +297,148 @@ func runDashboardCommand(app *cmd.CLIApp, args []string) {
 	if err := app.ShowDashboard(opts); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// runExportCommand handles the export subcommand
+func runExportCommand(app *cmd.CLIApp, args []string) {
+	var format string
+	var siteName string
+	var sinceStr string
+	var untilStr string
+	var limitStr string
+	var outputPath string
+	var stats bool
+	var stdout bool
+	var listFormats bool
+
+	// Parse arguments
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--format", "-f":
+			if i+1 < len(args) {
+				format = args[i+1]
+				i++
+			}
+		case "--site", "-s":
+			if i+1 < len(args) {
+				siteName = args[i+1]
+				i++
+			}
+		case "--since":
+			if i+1 < len(args) {
+				sinceStr = args[i+1]
+				i++
+			}
+		case "--until":
+			if i+1 < len(args) {
+				untilStr = args[i+1]
+				i++
+			}
+		case "--limit", "-l":
+			if i+1 < len(args) {
+				limitStr = args[i+1]
+				i++
+			}
+		case "--output", "-o":
+			if i+1 < len(args) {
+				outputPath = args[i+1]
+				i++
+			}
+		case "--stats":
+			stats = true
+		case "--stdout":
+			stdout = true
+		case "--list-formats":
+			listFormats = true
+		case "--help", "-h":
+			showExportHelp()
+			return
+		}
+	}
+
+	// Show format list if requested
+	if listFormats {
+		app.ListExportFormats()
+		return
+	}
+
+	// Parse duration
+	since := 24 * time.Hour // Default to 24 hours
+	if sinceStr != "" {
+		var err error
+		since, err = parseDuration(sinceStr)
+		if err != nil {
+			log.Fatalf("Invalid duration '%s': %v", sinceStr, err)
+		}
+	}
+
+	// Parse until time
+	var until *time.Time
+	if untilStr != "" {
+		parsedTime, err := time.Parse("2006-01-02 15:04:05", untilStr)
+		if err != nil {
+			// Try alternative format
+			parsedTime, err = time.Parse("2006-01-02", untilStr)
+			if err != nil {
+				log.Fatalf("Invalid until time '%s': use format '2006-01-02 15:04:05' or '2006-01-02'", untilStr)
+			}
+		}
+		until = &parsedTime
+	}
+
+	// Parse limit
+	limit := 0
+	if limitStr != "" {
+		var err error
+		limit, err = strconv.Atoi(limitStr)
+		if err != nil || limit < 0 {
+			log.Fatalf("Invalid limit '%s': must be a positive number", limitStr)
+		}
+	}
+
+	opts := cmd.ExportCLIOptions{
+		Format:     format,
+		SiteName:   siteName,
+		Since:      since,
+		Until:      until,
+		Limit:      limit,
+		OutputPath: outputPath,
+		Stats:      stats,
+		Stdout:     stdout,
+	}
+
+	if err := app.ShowExport(opts); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// showExportHelp displays help for the export command
+func showExportHelp() {
+	fmt.Println("Site Monitor - Export Command Help")
+	fmt.Println()
+	fmt.Println("USAGE:")
+	fmt.Println("  site-monitor export [options]")
+	fmt.Println()
+	fmt.Println("OPTIONS:")
+	fmt.Println("  --format, -f <format>   Export format (json, csv, html) [default: json]")
+	fmt.Println("  --site, -s <name>       Export data for specific site only")
+	fmt.Println("  --since <duration>      Time period to export (e.g., 1h, 24h, 7d) [default: 24h]")
+	fmt.Println("  --until <time>          End time (format: '2006-01-02 15:04:05' or '2006-01-02')")
+	fmt.Println("  --limit, -l <number>    Maximum number of records to export")
+	fmt.Println("  --output, -o <file>     Output file path [default: auto-generated]")
+	fmt.Println("  --stats                 Include statistical summary in export")
+	fmt.Println("  --stdout                Output to stdout instead of file")
+	fmt.Println("  --list-formats          Show available export formats")
+	fmt.Println("  --help, -h              Show this help message")
+	fmt.Println()
+	fmt.Println("EXAMPLES:")
+	fmt.Println("  site-monitor export --format json --output data.json")
+	fmt.Println("  site-monitor export --format csv --site \"My Site\" --since 7d")
+	fmt.Println("  site-monitor export --format html --stats --output report.html")
+	fmt.Println("  site-monitor export --format json --stdout | jq .")
+	fmt.Println("  site-monitor export --list-formats")
+	fmt.Println("  site-monitor export --since 1h --until \"2024-01-01 12:00:00\"")
+	fmt.Println()
 }
 
 // runMonitor runs the original monitoring daemon

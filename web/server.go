@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"site-monitor/config"
+	"site-monitor/export"
 	"site-monitor/storage"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -42,6 +45,7 @@ func NewDashboard(storage storage.Storage, config *config.Config, port int) *Das
 	// Serve static files
 	router.HandleFunc("/static/dashboard.css", dashboard.serveDashboardCSS)
 	router.HandleFunc("/static/dashboard.js", dashboard.serveDashboardJS)
+
 	// API routes
 	api := router.PathPrefix("/api").Subrouter()
 	api.HandleFunc("/stats", dashboard.apiStats).Methods("GET")
@@ -49,6 +53,10 @@ func NewDashboard(storage storage.Storage, config *config.Config, port int) *Das
 	api.HandleFunc("/sites", dashboard.apiSites).Methods("GET")
 	api.HandleFunc("/alerts", dashboard.apiAlerts).Methods("GET")
 	api.HandleFunc("/overview", dashboard.apiOverview).Methods("GET")
+
+	// Export API routes
+	api.HandleFunc("/export", dashboard.apiExport).Methods("GET")
+	api.HandleFunc("/export/formats", dashboard.apiExportFormats).Methods("GET")
 
 	// WebSocket endpoint
 	router.HandleFunc("/ws", dashboard.handleWebSocket)
@@ -286,6 +294,152 @@ func (d *Dashboard) apiAlerts(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(alertStatus); err != nil {
 		log.Printf("Failed to encode alert status JSON: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+// apiExport handles export requests via API
+func (d *Dashboard) apiExport(w http.ResponseWriter, r *http.Request) {
+	// Parse query parameters
+	query := r.URL.Query()
+
+	format := query.Get("format")
+	if format == "" {
+		format = "json" // Default format
+	}
+
+	siteName := query.Get("site")
+
+	// Parse since parameter
+	since := 24 * time.Hour // Default
+	if sinceParam := query.Get("since"); sinceParam != "" {
+		if parsed, err := time.ParseDuration(sinceParam); err == nil {
+			since = parsed
+		}
+	}
+
+	// Parse until parameter
+	var until *time.Time
+	if untilParam := query.Get("until"); untilParam != "" {
+		if parsed, err := time.Parse(time.RFC3339, untilParam); err == nil {
+			until = &parsed
+		}
+	}
+
+	// Parse limit
+	limit := 0
+	if limitParam := query.Get("limit"); limitParam != "" {
+		if parsed, err := strconv.Atoi(limitParam); err == nil && parsed > 0 {
+			limit = parsed
+		}
+	}
+
+	// Parse stats flag
+	includeStats := query.Get("stats") == "true"
+
+	// Parse export format
+	exportFormat, err := d.parseAPIExportFormat(format)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Create exporter
+	exporter := export.NewExporter(d.storage)
+
+	// Build export options
+	exportOpts := export.ExportOptions{
+		Format:       exportFormat,
+		SiteName:     siteName,
+		Since:        since,
+		Until:        until,
+		Limit:        limit,
+		IncludeStats: includeStats,
+	}
+
+	// Export data
+	data, err := exporter.Export(exportOpts)
+	if err != nil {
+		log.Printf("Export failed: %v", err)
+		http.Error(w, "Export failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Get formatter
+	formatter, err := export.GetFormatter(exportFormat)
+	if err != nil {
+		log.Printf("Failed to get formatter: %v", err)
+		http.Error(w, "Failed to get formatter", http.StatusInternalServerError)
+		return
+	}
+
+	// Set appropriate headers
+	w.Header().Set("Content-Type", formatter.ContentType())
+
+	// Generate filename for download
+	timestamp := time.Now().Format("20060102_150405")
+	var filename string
+	if siteName != "" {
+		safeName := url.QueryEscape(siteName)
+		filename = fmt.Sprintf("site-monitor_%s_%s%s", safeName, timestamp, formatter.FileExtension())
+	} else {
+		filename = fmt.Sprintf("site-monitor_export_%s%s", timestamp, formatter.FileExtension())
+	}
+
+	// Set content disposition for download
+	if query.Get("download") == "true" {
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	}
+
+	// Write export data
+	if err := formatter.Format(data, w); err != nil {
+		log.Printf("Failed to format export data: %v", err)
+		// Can't send error response here as we may have already started writing
+	}
+}
+
+// apiExportFormats returns available export formats
+func (d *Dashboard) apiExportFormats(w http.ResponseWriter, r *http.Request) {
+	formats := export.GetSupportedFormats()
+
+	type FormatInfo struct {
+		Format      string `json:"format"`
+		Description string `json:"description"`
+		ContentType string `json:"content_type"`
+		Extension   string `json:"file_extension"`
+	}
+
+	var formatList []FormatInfo
+	for _, format := range formats {
+		formatter, _ := export.GetFormatter(format)
+		formatList = append(formatList, FormatInfo{
+			Format:      string(format),
+			Description: export.FormatDescription(format),
+			ContentType: formatter.ContentType(),
+			Extension:   formatter.FileExtension(),
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
+		"formats": formatList,
+		"default": "json",
+	}); err != nil {
+		log.Printf("Failed to encode export formats JSON: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+// parseAPIExportFormat parses export format from API parameter
+func (d *Dashboard) parseAPIExportFormat(format string) (export.ExportFormat, error) {
+	switch strings.ToLower(format) {
+	case "json":
+		return export.FormatJSON, nil
+	case "csv":
+		return export.FormatCSV, nil
+	case "html":
+		return export.FormatHTML, nil
+	default:
+		return "", fmt.Errorf("unsupported format '%s'. Supported formats: json, csv, html", format)
 	}
 }
 

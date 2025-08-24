@@ -1,20 +1,21 @@
 # Site Monitor 🚀
 
-Un outil de surveillance de sites web complet avec **dashboard web temps réel**, système d'alertes avancé et interface CLI, écrit en Go.
+Un outil de surveillance de sites web complet avec **dashboard web temps réel**, **export de données**, système d'alertes avancé et interface CLI, écrit en Go.
 
 ## ✨ Fonctionnalités
 
 - 🏃 **Surveillance multi-sites** avec goroutines concurrentes
 - 💾 **Stockage SQLite** avec historique complet des vérifications
-- 📊 **Statistiques détaillées** (uptime, temps de réponse, SLA)
+- 📊 **Export de données** en JSON, CSV et HTML pour analyse approfondie
 - 🌐 **Dashboard web moderne** avec graphiques temps réel et WebSocket
 - 🚨 **Système d'alertes intelligent** (Email, Webhook, Slack, Discord, Teams)
-- 🖥️  **CLI avancée** avec 5 commandes puissantes
+- 🖥️  **CLI avancée** avec 6 commandes puissantes
 - ⚡ **Monitoring temps réel** avec mode surveillance
 - 📋 **Configuration JSON** flexible et simple
 - 🎯 **Validation HTTP** avec codes de statut personnalisables
 - 🔍 **Filtrage et pagination** pour l'analyse des données
 - 🔔 **Notifications multi-canaux** avec templates personnalisables
+- 📈 **Rapports visuels** et analyses statistiques détaillées
 
 ## 🚀 Démarrage rapide
 
@@ -94,8 +95,11 @@ Créer un fichier `config.json` :
 # Démarrer la surveillance avec alertes (daemon)
 site-monitor run
 
-# 🌐 NOUVEAU: Lancer le dashboard web
+# 🌐 Dashboard web temps réel
 site-monitor dashboard --port 8080
+
+# 📊 NOUVEAU: Export de données
+site-monitor export --format json --output data.json
 
 # Voir les statistiques
 site-monitor stats
@@ -107,9 +111,102 @@ site-monitor history
 site-monitor status
 ```
 
-## 🌐 Dashboard Web - NOUVEAU !
+## 📊 Export de Données - NOUVEAU v0.6.0 !
 
-**Site Monitor v0.5.0** introduit un **dashboard web moderne** avec interface temps réel !
+**Site Monitor v0.6.0** introduit un **système d'export complet** pour analyser vos données !
+
+### 🎯 **Fonctionnalités d'Export**
+
+- **📋 3 formats** : JSON (API), CSV (Excel), HTML (Rapports visuels)
+- **🔍 Filtrage avancé** : Par site, période, limite de records
+- **📈 Statistiques intégrées** : Métriques de performance complètes
+- **🖥️ Interface CLI** et **🌐 API REST** complètes
+- **📱 Rapports responsives** avec design moderne
+- **⚡ Export temps réel** vers fichier ou stdout
+
+### 🚀 **Utilisation CLI Export**
+
+```bash
+# Export de base (JSON, 24h, tous sites)
+site-monitor export
+
+# Formats spécialisés
+site-monitor export --format json --output data.json
+site-monitor export --format csv --output report.csv  
+site-monitor export --format html --output report.html
+
+# Filtrage avancé
+site-monitor export --site "Mon Site" --since 7d --format csv
+site-monitor export --since 1h --until "2024-01-15 12:00:00"
+site-monitor export --limit 1000 --stats
+
+# Pour pipelines et analyses
+site-monitor export --stdout --format json | jq .
+site-monitor export --list-formats
+site-monitor export --help
+```
+
+### 📊 **API REST Export**
+
+```bash
+# Export JSON avec statistiques
+curl "http://localhost:8080/api/export?format=json&since=24h&stats=true"
+
+# Export CSV pour un site spécifique
+curl "http://localhost:8080/api/export?format=csv&site=Mon%20Site&since=7d&download=true"
+
+# Export HTML avec rapport visuel
+curl "http://localhost:8080/api/export?format=html&since=1h&limit=100"
+
+# Liste des formats disponibles
+curl "http://localhost:8080/api/export/formats"
+```
+
+### 🎨 **Formats d'Export**
+
+#### 🔸 **JSON** - Intégrations & API
+```json
+{
+  "metadata": {
+    "generated_at": "2024-01-15T10:30:00Z",
+    "total_records": 150,
+    "sites_included": ["Site A", "Site B"],
+    "time_range": { "from": "...", "to": "..." }
+  },
+  "stats": {
+    "overall_uptime": 98.7,
+    "avg_response_time": 120000000,
+    "site_stats": { "Site A": { ... } }
+  },
+  "history": [
+    {
+      "timestamp": "2024-01-15T10:25:00Z",
+      "site_name": "Site A",
+      "success": true,
+      "status_code": 200,
+      "response_time_ms": 95
+    }
+  ]
+}
+```
+
+#### 🔸 **CSV** - Excel & Analyses
+```csv
+timestamp,site_name,url,success,status_code,response_time_ms,error
+2024-01-15T10:25:00Z,Site A,https://site-a.com,true,200,95.00,
+2024-01-15T10:24:00Z,Site B,https://site-b.com,false,500,200.00,Internal Server Error
+```
+
+#### 🔸 **HTML** - Rapports Visuels
+- 🎨 **Design professionnel** avec CSS moderne responsive
+- 📊 **Cartes de statistiques** avec métriques colorées  
+- 📈 **Tableaux interactifs** avec données détaillées
+- 🎯 **Indicateurs visuels** avec icônes et statuts
+- 📱 **Mobile-friendly** adaptatif tous écrans
+
+## 🌐 Dashboard Web
+
+Le **dashboard web moderne** avec interface temps réel :
 
 ### 🎯 **Fonctionnalités du Dashboard**
 
@@ -120,6 +217,7 @@ site-monitor status
 - **⚡ WebSocket temps réel** : Mises à jour automatiques sans rechargement
 - **📱 Design responsive** : Optimisé mobile et desktop
 - **🌙 Mode sombre automatique** : S'adapte aux préférences système
+- **📊 Intégration export** : Accès direct aux fonctions d'export
 
 ### 🚀 **Démarrer le Dashboard**
 
@@ -133,15 +231,6 @@ site-monitor dashboard --port 3000
 # Puis ouvrir dans le navigateur
 open http://localhost:8080
 ```
-
-### 📸 **Aperçu du Dashboard**
-
-Le dashboard affiche :
-- **Cartes de résumé** : Sites totaux, sites sains, uptime global, vérifications totales
-- **Grille des sites** : Statut, uptime et temps de réponse par site
-- **Graphiques temps réel** : Tendances des temps de réponse sur 24h
-- **Activité live** : Stream des dernières vérifications avec statuts
-- **Indicateur de connexion** : WebSocket connecté/déconnecté
 
 ## 🚨 Système d'alertes
 
@@ -159,38 +248,8 @@ Site Monitor intègre un système d'alertes intelligent qui vous notifie automat
 #### 📧 **Email (SMTP)**
 Emails HTML riches avec détails complets et recommandations d'actions.
 
-```json
-{
-  "email": {
-    "enabled": true,
-    "smtp_server": "smtp.gmail.com",
-    "smtp_port": 587,
-    "username": "alerts@monsite.com",
-    "password": "votre-mot-de-passe-app",
-    "from": "Site Monitor <alerts@monsite.com>",
-    "recipients": ["admin@monsite.com", "ops@monsite.com"],
-    "use_tls": true
-  }
-}
-```
-
 #### 🔗 **Webhooks**
 Support natif pour Slack, Discord, Microsoft Teams et webhooks génériques.
-
-```json
-{
-  "webhook": {
-    "enabled": true,
-    "url": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
-    "format": "slack",
-    "timeout": "30s",
-    "retry_count": 3,
-    "headers": {
-      "Authorization": "Bearer your-token"
-    }
-  }
-}
-```
 
 **Formats supportés :**
 - `slack` - Messages Slack avec attachments colorés
@@ -200,7 +259,7 @@ Support natif pour Slack, Discord, Microsoft Teams et webhooks génériques.
 
 ## 🖥️ Interface CLI
 
-Site Monitor propose 5 commandes CLI pour une gestion complète :
+Site Monitor propose **6 commandes CLI** pour une gestion complète :
 
 ### 🏃 **`run`** - Mode surveillance (par défaut)
 Démarre la surveillance continue de tous les sites configurés.
@@ -209,7 +268,7 @@ Démarre la surveillance continue de tous les sites configurés.
 site-monitor run        # ou simplement: site-monitor
 ```
 
-### 🌐 **`dashboard`** - Dashboard web - NOUVEAU !
+### 🌐 **`dashboard`** - Dashboard web
 Lance le serveur web avec interface graphique moderne.
 
 ```bash
@@ -217,12 +276,26 @@ site-monitor dashboard                    # Port 8080 par défaut
 site-monitor dashboard --port 3000       # Port personnalisé
 ```
 
-**Fonctionnalités du dashboard :**
-- Interface web moderne et responsive
-- Graphiques temps réel avec Chart.js
-- WebSocket pour mises à jour automatiques
-- Vue d'ensemble et détails par site
-- Stream d'activité en direct
+### 📊 **`export`** - Export de données - NOUVEAU !
+Exporte les données de monitoring dans différents formats.
+
+```bash
+site-monitor export                           # Export JSON par défaut (24h)
+site-monitor export --format csv --since 7d  # CSV dernière semaine
+site-monitor export --format html --stats    # Rapport HTML avec stats
+site-monitor export --list-formats           # Formats disponibles
+site-monitor export --help                   # Aide complète
+```
+
+**Options complètes :**
+- `--format` : json, csv, html
+- `--site` : Filtrer par site spécifique
+- `--since` : Période (1h, 24h, 7d, 30d)
+- `--until` : Date de fin
+- `--limit` : Nombre max de records
+- `--output` : Fichier de sortie
+- `--stats` : Inclure les statistiques
+- `--stdout` : Sortie vers stdout
 
 ### 📊 **`stats`** - Statistiques détaillées
 Affiche les métriques de performance et de disponibilité.
@@ -253,71 +326,82 @@ site-monitor status --watch                 # Surveillance continue
 site-monitor status --watch --interval 10s  # Rafraîchi toutes les 10s
 ```
 
-### 📖 **`--help`** - Aide complète
+## 💡 Cas d'Usage Export
+
+### 📊 **Analyse de Performance**
 ```bash
-site-monitor --help         # Aide générale
-site-monitor --version      # Version du logiciel
+# Rapport hebdomadaire complet
+site-monitor export --format html --since 7d --stats --output weekly-report.html
+
+# Analyse des tendances (JSON pour scripts)
+site-monitor export --format json --since 30d --stdout | jq '.stats.overall_uptime'
+```
+
+### 📈 **Reporting Client**
+```bash
+# Rapport professionnel pour client
+site-monitor export \
+  --format html \
+  --site "Site Client A" \
+  --since 24h \
+  --stats \
+  --output "rapport-client-$(date +%Y%m%d).html"
+```
+
+### 🔄 **Intégrations BI/Analytics**
+```bash
+# Export CSV pour Excel/Google Sheets
+site-monitor export --format csv --since 30d --output monthly-data.csv
+
+# Données JSON pour système BI
+site-monitor export --format json --stats --stdout | \
+  curl -X POST -H "Content-Type: application/json" \
+  -d @- https://analytics.monsite.com/api/import
+```
+
+### ⚙️ **Automatisation et Pipelines**
+```bash
+# Export quotidien automatique
+#!/bin/bash
+DATE=$(date +%Y-%m-%d)
+site-monitor export --format csv --since 1d --output "daily-$DATE.csv"
+
+# Alerte si uptime < 95%
+UPTIME=$(site-monitor export --stdout --format json | jq '.stats.overall_uptime')
+if (( $(echo "$UPTIME < 95" | bc -l) )); then
+  echo "⚠️ Uptime critique: $UPTIME%" | mail -s "Site Monitor Alert" admin@monsite.com
+fi
 ```
 
 ## ⚙️ Configuration avancée
 
-### Fichier config.json complet
+### API REST Complète
 
+Le dashboard expose maintenant une **API REST étendue** :
+
+#### Endpoints Export
+- `GET /api/export` - Export de données avec paramètres
+- `GET /api/export/formats` - Liste des formats disponibles
+
+#### Endpoints Monitoring  
+- `GET /api/overview` - Vue d'ensemble du système
+- `GET /api/stats` - Statistiques détaillées
+- `GET /api/history` - Historique des vérifications
+- `GET /api/sites` - Liste des sites configurés
+- `GET /api/alerts` - Status des alertes
+
+#### WebSocket
+- `WS /ws` - Mises à jour temps réel
+
+### Configuration Export
 ```json
 {
-  "sites": [
-    {
-      "name": "Site Principal Production",
-      "url": "https://monsite.com",
-      "interval": "30s",
-      "timeout": "10s"
-    },
-    {
-      "name": "API REST v1",
-      "url": "https://api.monsite.com/v1/health",
-      "interval": "60s",
-      "timeout": "5s"
-    },
-    {
-      "name": "Service de Paiement",
-      "url": "https://payments.monsite.com/status",
-      "interval": "2m",
-      "timeout": "15s"
-    }
-  ],
-  "alerts": {
-    "email": {
-      "enabled": true,
-      "smtp_server": "smtp.gmail.com",
-      "smtp_port": 587,
-      "username": "monitoring@monsite.com",
-      "password": "app-specific-password",
-      "from": "Site Monitor <noreply@monsite.com>",
-      "recipients": [
-        "admin@monsite.com",
-        "devops@monsite.com",
-        "on-call@monsite.com"
-      ],
-      "use_tls": true
-    },
-    "webhook": {
-      "enabled": true,
-      "url": "https://hooks.slack.com/services/T123/B456/xyz789",
-      "format": "slack",
-      "timeout": "30s",
-      "retry_count": 3,
-      "headers": {
-        "User-Agent": "SiteMonitor/0.5.0"
-      }
-    },
-    "thresholds": {
-      "consecutive_failures": 3,
-      "response_time_threshold": "5s",
-      "uptime_threshold": 95.0,
-      "uptime_window": "24h",
-      "performance_window": "1h",
-      "alert_cooldown": "10m"
-    }
+  "sites": [ ... ],
+  "export": {
+    "default_format": "json",
+    "max_records": 100000,
+    "enable_api": true,
+    "rate_limit": "100/hour"
   }
 }
 ```
@@ -330,6 +414,7 @@ Site Monitor utilise SQLite pour stocker l'historique complet :
 - **Schéma optimisé** avec indexes pour les performances
 - **Concurrence sûre** pour les accès multiples
 - **Mode WAL** pour de meilleures performances
+- **Export efficace** avec requêtes optimisées
 
 ## 🔧 Développement
 
@@ -349,8 +434,11 @@ go mod tidy
 # Compiler
 make build
 
-# Lancer les tests
+# Lancer les tests (incluant export)
 make test
+
+# Tests avec couverture
+make test-coverage
 
 # Formater le code
 make fmt
@@ -370,9 +458,10 @@ make stats          # Voir les statistiques
 make history        # Voir l'historique  
 make status         # Voir le statut
 make dashboard      # Lancer le dashboard web
+make export         # Tester l'export
 make clean          # Nettoyer les artifacts
 make install        # Installer globalement
-make demo           # Démonstration CLI
+make demo           # Démonstration CLI complète
 ```
 
 ## 📦 Installation système
@@ -385,7 +474,7 @@ make install
 sudo cp site-monitor /usr/local/bin/
 
 # Vérification
-site-monitor --version
+site-monitor --version  # v0.6.0
 ```
 
 ### Service systemd (Linux)
@@ -423,39 +512,39 @@ sudo systemctl status site-monitor
 
 ## 🚀 Roadmap
 
-### ✅ Version 0.5.0 (Actuelle)
-- ✅ **Dashboard web moderne** avec interface graphique complète
-- ✅ **WebSocket temps réel** pour mises à jour automatiques
-- ✅ **Graphiques interactifs** (Chart.js) - temps de réponse et uptime
-- ✅ **Design responsive** optimisé mobile et desktop
-- ✅ **API REST complète** pour intégrations tierces
+### ✅ Version 0.6.0 (Actuelle)
+- ✅ **Export complet** JSON, CSV, HTML avec API REST
+- ✅ **Statistiques avancées** dans les exports
+- ✅ **Filtrage et pagination** des données
+- ✅ **Rapports HTML** visuels et responsives
+- ✅ **Interface CLI étendue** avec 6 commandes
+- ✅ **Dashboard web moderne** avec WebSocket temps réel
 - ✅ Système d'alertes complet (Email, Webhook)
 - ✅ Support Slack, Discord, Microsoft Teams
-- ✅ Seuils configurables et logique intelligente
-- ✅ Templates d'emails HTML riches
-- ✅ CLI avancée avec 5 commandes
-- ✅ Stockage SQLite complet
+- ✅ CLI avancée et stockage SQLite complet
 
-### 🔮 Version 0.6.0 (Prochaine)
-- [ ] 📊 **Export des données** (JSON, CSV, API REST étendue)
-- [ ] 🔔 **Notifications push** et intégrations mobiles
-- [ ] 📈 **Métriques avancées** (p95, p99, MTTR, MTBF)
+### 🔮 Version 0.7.0 (Prochaine)
+- [ ] 🔒 **Monitoring SSL/TLS** avec alertes d'expiration certificats
+- [ ] 📈 **Métriques avancées** (P95, P99, MTTR, MTBF)
+- [ ] 📊 **Export Excel** (.xlsx) natif avec graphiques
+- [ ] 🔄 **Export programmé** (cron-like) automatique
+- [ ] 📧 **Export par email** avec rapports périodiques
 - [ ] 🎨 **Templates d'alertes** personnalisables
-- [ ] 🛡️  **Vérifications SSL/TLS** et monitoring certificats
 
-### 🔮 Version 0.7.0
+### 🔮 Version 0.8.0
 - [ ] 🐳 **Support Docker et Kubernetes** complet
-- [ ] ☁️  **Déploiement cloud** (AWS, GCP, Azure)
+- [ ] ☁️  **Déploiement cloud** (AWS, GCP, Azure)  
 - [ ] 🔗 **Intégrations** (Grafana, Prometheus, DataDog)
 - [ ] 🌍 **Monitoring multi-régions** et géo-distribué
 - [ ] 📱 **Application mobile** companion
+- [ ] 🗜️ **Compression** automatique des exports
 
 ## 🤝 Contribution
 
 1. **Fork** le projet
-2. **Créer** une branche (`git checkout -b feature/nouvelle-fonctionnalite`)
-3. **Committer** (`git commit -m 'feat: ajouter dashboard web moderne'`)
-4. **Push** (`git push origin feature/nouvelle-fonctionnalite`)
+2. **Créer** une branche (`git checkout -b feature/export-excel`)
+3. **Committer** (`git commit -m 'feat: ajouter export Excel avec graphiques'`)
+4. **Push** (`git push origin feature/export-excel`)
 5. **Ouvrir** une Pull Request
 
 ### Guidelines
@@ -475,7 +564,8 @@ site-monitor/
 │   ├── stats.go              # Commande statistiques
 │   ├── history.go            # Commande historique
 │   ├── status.go             # Commande statut
-│   └── dashboard.go          # Commande dashboard web
+│   ├── dashboard.go          # Commande dashboard web
+│   └── export.go             # Commande export - NOUVEAU !
 ├── config/
 │   └── config.go             # Configuration (sites + alertes)
 ├── monitor/
@@ -484,13 +574,19 @@ site-monitor/
 ├── storage/
 │   ├── storage.go            # Interface générique
 │   └── sqlite.go             # Implémentation SQLite
+├── export/                   # Système d'export - NOUVEAU !
+│   ├── types.go              # Types et structures d'export
+│   ├── exporter.go           # Logique principale d'export
+│   ├── formatters.go         # Formatters JSON/CSV/HTML
+│   ├── exporter_test.go      # Tests unitaires
+│   └── formatters_test.go    # Tests des formatters
 ├── alerts/                   # Système d'alertes
 │   ├── types.go              # Types et interfaces d'alertes
 │   ├── manager.go            # Gestionnaire central d'alertes
 │   ├── email.go              # Canal d'alerte email (SMTP)
 │   └── webhook.go            # Canal webhook (Slack/Discord/Teams)
-├── web/                      # Dashboard web - NOUVEAU !
-│   ├── server.go             # Serveur HTTP et API REST
+├── web/                      # Dashboard web
+│   ├── server.go             # Serveur HTTP et API REST (+ export API)
 │   ├── dashboard.go          # Templates HTML/CSS/JS
 │   └── types.go              # Types pour API REST
 ├── config.json               # Configuration des sites et alertes
@@ -506,8 +602,20 @@ Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de
 - 🐛 **Bugs** : [Issues GitHub](https://github.com/papaganelli/site-monitor/issues)
 - 💡 **Fonctionnalités** : [Discussions](https://github.com/papaganelli/site-monitor/discussions)
 - 📖 **Documentation** : [Wiki](https://github.com/papaganelli/site-monitor/wiki)
+- 📊 **Guide Export** : [EXPORT.md](EXPORT.md)
 
 ## 📈 Changelog
+
+### v0.6.0 - Export de Données Complet 📊
+- 📊 **Système d'export complet** avec 3 formats (JSON, CSV, HTML)
+- 🖥️  **Commande CLI export** avec options avancées et aide intégrée
+- 🌐 **API REST export** (`/api/export`, `/api/export/formats`)
+- 📈 **Statistiques étendues** dans tous les exports
+- 🎨 **Rapports HTML** professionnels avec design responsive
+- 🔍 **Filtrage avancé** (site, période, limite, until)
+- ⚡ **Support stdout** pour pipelines et intégrations
+- 📝 **Documentation complète** avec exemples d'usage
+- 🧪 **Tests unitaires** complets pour tous les composants
 
 ### v0.5.0 - Dashboard Web Moderne 🌐
 - 🌐 **Dashboard web complet** avec interface graphique moderne et responsive
@@ -554,4 +662,4 @@ Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de
 
 ---
 
-**Fait avec ❤️ en Go** • [Site Monitor](https://github.com/papaganelli/site-monitor)
+**Fait avec ❤️ en Go** • [Site Monitor v0.6.0](https://github.com/papaganelli/site-monitor)
