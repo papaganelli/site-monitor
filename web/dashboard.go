@@ -77,7 +77,7 @@ const dashboardHTML = `<!DOCTYPE html>
             <section class="charts-section">
                 <div class="charts-grid">
                     <div class="chart-container">
-                        <h3 class="chart-title">Response Time Trends (Last 24h)</h3>
+                        <h3 class="chart-title">Response Time Trends (Last 6h)</h3>
                         <canvas id="response-time-chart" width="400" height="200"></canvas>
                     </div>
                     

@@ -1,6 +1,6 @@
 package web
 
-// dashboardJS contains the clean JavaScript code for dashboard functionality
+// dashboardJS contains the JavaScript code
 const dashboardJS = `
 var SiteMonitorDashboard = function() {
     this.ws = null;
@@ -51,13 +51,15 @@ SiteMonitorDashboard.prototype.initCharts = function() {
     this.initUptimeChart();
 };
 
+// ✅ FONCTION CORRIGÉE: Graphique des temps de réponse avec meilleur groupage
 SiteMonitorDashboard.prototype.initResponseTimeChart = function() {
     var ctx = document.getElementById('response-time-chart');
     if (!ctx) return;
     
     var self = this;
     
-    fetch('/api/history?since=24h&limit=50')
+    // CORRECTION: Demander plus de données sur une période plus courte pour plus de densité
+    fetch('/api/history?since=6h&limit=100')
         .then(function(r) { return r.json(); })
         .then(function(history) {
             if (history.length === 0) {
@@ -75,9 +77,13 @@ SiteMonitorDashboard.prototype.initResponseTimeChart = function() {
                 return;
             }
 
-            var groupedData = self.groupDataByTimeInterval(validEntries);
+            // CORRECTION: Utiliser la logique de groupage améliorée
+            var groupedData = validEntries.length > 15 ? 
+                self.groupDataByTimeInterval(validEntries) : 
+                validEntries.sort(function(a, b) { return new Date(a.timestamp) - new Date(b.timestamp); });
+            
             if (groupedData.length === 0) {
-                self.showChartError('response-time-chart', 'Unable to group data for display.');
+                self.showChartError('response-time-chart', 'Unable to process data for display.');
                 return;
             }
 
@@ -193,32 +199,58 @@ SiteMonitorDashboard.prototype.initResponseTimeChart = function() {
         });
 };
 
+// ✅ FONCTION CORRIGÉE: Groupage amélioré des données
 SiteMonitorDashboard.prototype.groupDataByTimeInterval = function(history) {
     if (history.length === 0) return [];
     
+    // Trier par timestamp (plus récent en premier)
     history.sort(function(a, b) {
         return new Date(b.timestamp) - new Date(a.timestamp);
     });
     
-    var recentHistory = history.slice(0, 30);
+    // CORRECTION: Prendre plus de données et réduire l'intervalle
+    var recentHistory = history.slice(0, 50); // Plus de données
     
-    if (recentHistory.length <= 5) {
-        return recentHistory.reverse();
+    // CORRECTION: Si peu de données, ne pas grouper du tout
+    if (recentHistory.length <= 10) {
+        return recentHistory.reverse(); // Chronologique
     }
     
+    // CORRECTION: Intervalles plus petits (15 minutes au lieu de 30)
     var grouped = {};
-    var interval = 30 * 60 * 1000; // 30 minutes
+    var interval = 15 * 60 * 1000; // 15 minutes
     
     recentHistory.forEach(function(entry) {
         var timestamp = new Date(entry.timestamp).getTime();
         var slotTime = Math.floor(timestamp / interval) * interval;
         var slotKey = slotTime.toString();
         
-        if (!grouped[slotKey] || new Date(entry.timestamp) > new Date(grouped[slotKey].timestamp)) {
-            grouped[slotKey] = entry;
+        // CORRECTION: Faire une moyenne au lieu de garder le dernier
+        if (!grouped[slotKey]) {
+            grouped[slotKey] = {
+                timestamp: entry.timestamp,
+                response_time_ms: entry.response_time_ms || entry.duration || entry.response_time_ns,
+                site_name: entry.site_name,
+                success: entry.success,
+                count: 1
+            };
+        } else {
+            // Moyenne pondérée des temps de réponse
+            var existingTime = grouped[slotKey].response_time_ms || 0;
+            var newTime = entry.response_time_ms || entry.duration || entry.response_time_ns || 0;
+            var count = grouped[slotKey].count;
+            
+            grouped[slotKey].response_time_ms = ((existingTime * count) + newTime) / (count + 1);
+            grouped[slotKey].count = count + 1;
+            
+            // Garder le timestamp le plus récent
+            if (new Date(entry.timestamp) > new Date(grouped[slotKey].timestamp)) {
+                grouped[slotKey].timestamp = entry.timestamp;
+            }
         }
     });
     
+    // Convertir en array et trier chronologiquement
     return Object.values(grouped).sort(function(a, b) {
         return new Date(a.timestamp) - new Date(b.timestamp);
     });
@@ -310,11 +342,12 @@ SiteMonitorDashboard.prototype.processUptimeData = function(stats) {
     };
 };
 
+// ✅ CORRECTION: Fonction updateCharts avec le nouveau groupage
 SiteMonitorDashboard.prototype.updateCharts = function() {
     var self = this;
     
     if (this.charts.responseTime) {
-        fetch('/api/history?since=24h&limit=50')
+        fetch('/api/history?since=6h&limit=100')
             .then(function(r) { return r.json(); })
             .then(function(history) {
                 if (history.length === 0) return;
@@ -324,7 +357,10 @@ SiteMonitorDashboard.prototype.updateCharts = function() {
                     return entry.success && responseTime && responseTime > 0;
                 });
 
-                var groupedData = self.groupDataByTimeInterval(validEntries);
+                var groupedData = validEntries.length > 15 ? 
+                    self.groupDataByTimeInterval(validEntries) : 
+                    validEntries.sort(function(a, b) { return new Date(a.timestamp) - new Date(b.timestamp); });
+                
                 if (groupedData.length === 0) return;
 
                 var labels = [];
