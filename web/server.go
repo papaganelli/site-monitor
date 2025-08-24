@@ -40,8 +40,8 @@ func NewDashboard(storage storage.Storage, config *config.Config, port int) *Das
 	router := mux.NewRouter()
 
 	// Serve static files
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.HandlerFunc(dashboard.serveStatic)))
-
+	router.HandleFunc("/static/dashboard.css", dashboard.serveDashboardCSS)
+	router.HandleFunc("/static/dashboard.js", dashboard.serveDashboardJS)
 	// API routes
 	api := router.PathPrefix("/api").Subrouter()
 	api.HandleFunc("/stats", dashboard.apiStats).Methods("GET")
@@ -405,5 +405,27 @@ func (d *Dashboard) sendOverviewUpdate(conn *websocket.Conn) {
 func (d *Dashboard) BroadcastUpdate() {
 	for conn := range d.clients {
 		d.sendOverviewUpdate(conn)
+	}
+}
+
+// serveDashboardCSS serves the CSS file
+func (d *Dashboard) serveDashboardCSS(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/css")
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+
+	if _, err := w.Write([]byte(dashboardCSS)); err != nil {
+		log.Printf("Failed to serve CSS: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+// serveDashboardJS serves the JavaScript file
+func (d *Dashboard) serveDashboardJS(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/javascript")
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+
+	if _, err := w.Write([]byte(dashboardJS)); err != nil {
+		log.Printf("Failed to serve JS: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
 }

@@ -163,7 +163,8 @@ func (s *SQLiteStorage) GetStats(siteName string, since time.Time) (Stats, error
 	WHERE site_name = ? AND timestamp >= ?`
 
 	var stats Stats
-	var avgNs, minNs, maxNs int64
+	var avgNs, minNs, maxNs float64
+	var lastCheckStr, firstCheckStr sql.NullString // ← Utiliser sql.NullString pour gérer les timestamps SQLite
 
 	row := s.db.QueryRow(statsSQL, siteName, since)
 	err := row.Scan(
@@ -173,8 +174,8 @@ func (s *SQLiteStorage) GetStats(siteName string, since time.Time) (Stats, error
 		&avgNs,
 		&minNs,
 		&maxNs,
-		&stats.LastCheck,
-		&stats.FirstCheck,
+		&lastCheckStr,  // ← Scanner en tant que string
+		&firstCheckStr, // ← Scanner en tant que string
 	)
 
 	if err != nil {
@@ -185,9 +186,38 @@ func (s *SQLiteStorage) GetStats(siteName string, since time.Time) (Stats, error
 	if stats.TotalChecks > 0 {
 		stats.SuccessRate = float64(stats.SuccessfulChecks) / float64(stats.TotalChecks) * 100
 	}
-	stats.AvgResponseTime = time.Duration(avgNs)
-	stats.MinResponseTime = time.Duration(minNs)
-	stats.MaxResponseTime = time.Duration(maxNs)
+
+	// Convertir les float64 en time.Duration
+	stats.AvgResponseTime = time.Duration(int64(avgNs))
+	stats.MinResponseTime = time.Duration(int64(minNs))
+	stats.MaxResponseTime = time.Duration(int64(maxNs))
+
+	// Convertir les strings en time.Time
+	if lastCheckStr.Valid {
+		if parsedTime, err := time.Parse(time.RFC3339, lastCheckStr.String); err == nil {
+			stats.LastCheck = parsedTime
+		} else {
+			// Essayer d'autres formats de date si RFC3339 échoue
+			if parsedTime, err := time.Parse("2006-01-02 15:04:05.999999999-07:00", lastCheckStr.String); err == nil {
+				stats.LastCheck = parsedTime
+			} else if parsedTime, err := time.Parse("2006-01-02T15:04:05Z", lastCheckStr.String); err == nil {
+				stats.LastCheck = parsedTime
+			}
+		}
+	}
+
+	if firstCheckStr.Valid {
+		if parsedTime, err := time.Parse(time.RFC3339, firstCheckStr.String); err == nil {
+			stats.FirstCheck = parsedTime
+		} else {
+			// Essayer d'autres formats de date si RFC3339 échoue
+			if parsedTime, err := time.Parse("2006-01-02 15:04:05.999999999-07:00", firstCheckStr.String); err == nil {
+				stats.FirstCheck = parsedTime
+			} else if parsedTime, err := time.Parse("2006-01-02T15:04:05Z", firstCheckStr.String); err == nil {
+				stats.FirstCheck = parsedTime
+			}
+		}
+	}
 
 	// Calculate uptime/downtime (simplified calculation)
 	if !stats.FirstCheck.IsZero() && !stats.LastCheck.IsZero() {
@@ -252,6 +282,7 @@ func (s *SQLiteStorage) scanHistoryEntries(rows *sql.Rows) ([]HistoryEntry, erro
 	for rows.Next() {
 		var entry HistoryEntry
 		var responseTimeNs int64
+		var timestampStr, createdAtStr string
 
 		err := rows.Scan(
 			&entry.ID,
@@ -261,8 +292,8 @@ func (s *SQLiteStorage) scanHistoryEntries(rows *sql.Rows) ([]HistoryEntry, erro
 			&responseTimeNs,
 			&entry.Success,
 			&entry.Error,
-			&entry.Timestamp,
-			&entry.CreatedAt,
+			&timestampStr,
+			&createdAtStr,
 		)
 
 		if err != nil {
@@ -270,6 +301,24 @@ func (s *SQLiteStorage) scanHistoryEntries(rows *sql.Rows) ([]HistoryEntry, erro
 		}
 
 		entry.Duration = time.Duration(responseTimeNs)
+
+		// Convertir les timestamps strings en time.Time
+		if parsedTime, err := time.Parse(time.RFC3339, timestampStr); err == nil {
+			entry.Timestamp = parsedTime
+		} else if parsedTime, err := time.Parse("2006-01-02 15:04:05.999999999-07:00", timestampStr); err == nil {
+			entry.Timestamp = parsedTime
+		} else if parsedTime, err := time.Parse("2006-01-02T15:04:05Z", timestampStr); err == nil {
+			entry.Timestamp = parsedTime
+		}
+
+		if parsedTime, err := time.Parse(time.RFC3339, createdAtStr); err == nil {
+			entry.CreatedAt = parsedTime
+		} else if parsedTime, err := time.Parse("2006-01-02 15:04:05.999999999-07:00", createdAtStr); err == nil {
+			entry.CreatedAt = parsedTime
+		} else if parsedTime, err := time.Parse("2006-01-02T15:04:05Z", createdAtStr); err == nil {
+			entry.CreatedAt = parsedTime
+		}
+
 		entries = append(entries, entry)
 	}
 

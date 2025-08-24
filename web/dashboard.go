@@ -8,7 +8,8 @@ const dashboardHTML = `<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Site Monitor Dashboard</title>
     <link rel="stylesheet" href="/static/dashboard.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
+    <!-- Chart.js v3.9.1 - Version stable et compatible -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 </head>
 <body>
     <div class="dashboard">
@@ -78,12 +79,12 @@ const dashboardHTML = `<!DOCTYPE html>
                 <div class="charts-grid">
                     <div class="chart-container">
                         <h3 class="chart-title">Response Time Trends (Last 24h)</h3>
-                        <canvas id="response-time-chart"></canvas>
+                        <canvas id="response-time-chart" width="400" height="200"></canvas>
                     </div>
                     
                     <div class="chart-container">
                         <h3 class="chart-title">Uptime Distribution</h3>
-                        <canvas id="uptime-chart"></canvas>
+                        <canvas id="uptime-chart" width="400" height="200"></canvas>
                     </div>
                 </div>
             </section>
@@ -665,8 +666,9 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }`
 
-// dashboardJS contains the JavaScript code
-const dashboardJS = `var SiteMonitorDashboard = function() {
+// dashboardJS contains the JavaScript code for dashboard functionality
+const dashboardJS = `
+var SiteMonitorDashboard = function() {
     this.ws = null;
     this.charts = {};
     this.lastUpdate = null;
@@ -678,12 +680,23 @@ const dashboardJS = `var SiteMonitorDashboard = function() {
 
 SiteMonitorDashboard.prototype.init = function() {
     var self = this;
-    this.loadInitialData().then(function() {
-        self.initWebSocket();
-        self.initCharts();
-        self.startPeriodicUpdates();
-        self.hideLoadingOverlay();
-    });
+    
+    // Attendre que Chart.js soit chargé
+    var checkChart = function() {
+        if (typeof Chart !== 'undefined') {
+            console.log('Chart.js loaded successfully, version:', Chart.version);
+            self.loadInitialData().then(function() {
+                self.initWebSocket();
+                self.initCharts();
+                self.startPeriodicUpdates();
+                self.hideLoadingOverlay();
+            });
+        } else {
+            console.log('Waiting for Chart.js to load...');
+            setTimeout(checkChart, 100);
+        }
+    };
+    checkChart();
 };
 
 SiteMonitorDashboard.prototype.loadInitialData = function() {
@@ -699,6 +712,306 @@ SiteMonitorDashboard.prototype.loadInitialData = function() {
         console.error('Failed to load initial data:', error);
         self.showToast('Failed to load dashboard data', 'error');
     });
+};
+
+SiteMonitorDashboard.prototype.initCharts = function() {
+    this.initResponseTimeChart();
+    this.initUptimeChart();
+};
+
+SiteMonitorDashboard.prototype.initResponseTimeChart = function() {
+    var ctx = document.getElementById('response-time-chart');
+    if (!ctx) {
+        console.error('Response time chart canvas not found');
+        return;
+    }
+    
+    var self = this;
+    
+    fetch('/api/history?since=1h&limit=20')
+        .then(function(r) { return r.json(); })
+        .then(function(history) {
+            console.log('Raw history data:', history);
+            
+            if (history.length === 0) {
+                self.showChartError('response-time-chart', 'No data available. Let monitoring run for a few minutes.');
+                return;
+            }
+
+            var labels = [];
+            var dataPoints = [];
+            
+            var recentHistory = history.slice(0, 10).reverse();
+            
+            recentHistory.forEach(function(entry, index) {
+                console.log('Processing entry:', entry);
+                
+                var date = new Date(entry.timestamp);
+                var timeLabel = date.getHours().toString().padStart(2, '0') + ':' + 
+                               date.getMinutes().toString().padStart(2, '0');
+                labels.push(timeLabel);
+                
+                var responseTimeMs = entry.duration / 1000000;
+                console.log('Response time for', timeLabel, ':', responseTimeMs, 'ms');
+                dataPoints.push(Math.round(responseTimeMs * 100) / 100);
+            });
+            
+            console.log('Chart labels:', labels);
+            console.log('Chart data points:', dataPoints);
+            
+            // Calculer l'échelle dynamique
+            var minValue = Math.min.apply(Math, dataPoints);
+            var maxValue = Math.max.apply(Math, dataPoints);
+            var range = maxValue - minValue;
+            
+            // Ajouter une marge de 20%
+            var margin = range * 0.2;
+            var yMin = Math.max(0, minValue - margin);
+            var yMax = maxValue + margin;
+            
+            console.log('Y scale:', yMin, 'to', yMax);
+            
+            self.charts.responseTime = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Response Time (ms)',
+                        data: dataPoints,
+                        borderColor: '#059669',
+                        backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 4,
+                        pointHoverRadius: 7,
+                        pointBackgroundColor: '#059669',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Response Time: ' + context.raw + ' ms';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            beginAtZero: false,
+                            min: yMin,
+                            max: yMax,
+                            title: {
+                                display: true,
+                                text: 'Response Time (ms)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toFixed(1) + ' ms';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            console.log('Response time chart created successfully!');
+        })
+        .catch(function(error) {
+            console.error('Failed to initialize response time chart:', error);
+            self.showChartError('response-time-chart', 'Error: ' + error.message);
+        });
+};
+
+SiteMonitorDashboard.prototype.initUptimeChart = function() {
+    var ctx = document.getElementById('uptime-chart');
+    if (!ctx) {
+        console.error('Uptime chart canvas not found');
+        return;
+    }
+    
+    var self = this;
+    
+    fetch('/api/stats')
+        .then(function(r) { return r.json(); })
+        .then(function(stats) {
+            console.log('Loaded stats data for uptime chart:', Object.keys(stats).length, 'sites');
+            var chartData = self.processUptimeData(stats);
+            
+            self.charts.uptime = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        data: chartData.data,
+                        backgroundColor: [
+                            '#059669',
+                            '#dc2626'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    var label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += context.parsed + '%';
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            console.log('Uptime chart created successfully');
+        })
+        .catch(function(error) {
+            console.error('Failed to initialize uptime chart:', error);
+            self.showChartError('uptime-chart', 'Failed to load uptime data');
+        });
+};
+
+SiteMonitorDashboard.prototype.processUptimeData = function(stats) {
+    var totalSuccess = 0;
+    var totalFailure = 0;
+    
+    for (var key in stats) {
+        if (stats.hasOwnProperty(key)) {
+            var site = stats[key];
+            totalSuccess += site.successful_checks;
+            totalFailure += site.failed_checks;
+        }
+    }
+    
+    var total = totalSuccess + totalFailure;
+    
+    if (total === 0) {
+        return {
+            labels: ['No Data'],
+            data: [100]
+        };
+    }
+    
+    var successPercent = (totalSuccess / total * 100);
+    var failurePercent = (totalFailure / total * 100);
+    
+    console.log('Uptime data:', successPercent.toFixed(1) + '% success,', failurePercent.toFixed(1) + '% failure');
+    
+    return {
+        labels: ['Successful', 'Failed'],
+        data: [successPercent.toFixed(1), failurePercent.toFixed(1)]
+    };
+};
+
+SiteMonitorDashboard.prototype.updateCharts = function() {
+    var self = this;
+    
+    console.log('Updating charts...');
+    
+    if (this.charts.responseTime) {
+        fetch('/api/history?since=1h&limit=20')
+            .then(function(r) { return r.json(); })
+            .then(function(history) {
+                if (history.length === 0) return;
+
+                var labels = [];
+                var dataPoints = [];
+                
+                var recentHistory = history.slice(0, 10).reverse();
+                
+                recentHistory.forEach(function(entry) {
+                    var date = new Date(entry.timestamp);
+                    var timeLabel = date.getHours().toString().padStart(2, '0') + ':' + 
+                                   date.getMinutes().toString().padStart(2, '0');
+                    labels.push(timeLabel);
+                    
+                    var responseTimeMs = entry.duration / 1000000;
+                    dataPoints.push(Math.round(responseTimeMs * 100) / 100);
+                });
+                
+                // Recalculer l'échelle
+                var minValue = Math.min.apply(Math, dataPoints);
+                var maxValue = Math.max.apply(Math, dataPoints);
+                var range = maxValue - minValue;
+                var margin = range * 0.2;
+                var yMin = Math.max(0, minValue - margin);
+                var yMax = maxValue + margin;
+                
+                self.charts.responseTime.data.labels = labels;
+                self.charts.responseTime.data.datasets[0].data = dataPoints;
+                self.charts.responseTime.options.scales.y.min = yMin;
+                self.charts.responseTime.options.scales.y.max = yMax;
+                self.charts.responseTime.update();
+                
+                console.log('Response time chart updated with', dataPoints.length, 'points');
+            })
+            .catch(function(error) {
+                console.error('Failed to update response time chart:', error);
+            });
+    }
+    
+    if (this.charts.uptime) {
+        fetch('/api/stats')
+            .then(function(r) { return r.json(); })
+            .then(function(stats) {
+                var chartData = self.processUptimeData(stats);
+                self.charts.uptime.data.labels = chartData.labels;
+                self.charts.uptime.data.datasets[0].data = chartData.data;
+                self.charts.uptime.update();
+                console.log('Uptime chart updated');
+            })
+            .catch(function(error) {
+                console.error('Failed to update uptime chart:', error);
+            });
+    }
+};
+
+SiteMonitorDashboard.prototype.showChartError = function(canvasId, message) {
+    var canvas = document.getElementById(canvasId);
+    if (canvas) {
+        var container = canvas.parentNode;
+        var title = container.querySelector('.chart-title');
+        var titleText = title ? title.textContent : 'Chart';
+        
+        container.innerHTML = 
+            '<h3 class="chart-title">' + titleText + '</h3>' +
+            '<div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #dc2626; text-align: center; flex-direction: column; background: #fef2f2; border-radius: 8px; border: 1px dashed #dc2626;">' +
+                '<div style="font-size: 2rem; margin-bottom: 10px;">📊</div>' +
+                '<div style="font-weight: 500; margin-bottom: 5px;">Chart Error</div>' +
+                '<div style="font-size: 0.9em; color: #991b1b;">' + message + '</div>' +
+            '</div>';
+    }
 };
 
 SiteMonitorDashboard.prototype.initWebSocket = function() {
@@ -800,151 +1113,6 @@ SiteMonitorDashboard.prototype.createSiteCard = function(site) {
         '</div>';
     
     return card;
-};
-
-SiteMonitorDashboard.prototype.initCharts = function() {
-    this.initResponseTimeChart();
-    this.initUptimeChart();
-};
-
-SiteMonitorDashboard.prototype.initResponseTimeChart = function() {
-    var ctx = document.getElementById('response-time-chart');
-    if (!ctx || typeof Chart === 'undefined') return;
-    
-    var self = this;
-    
-    fetch('/api/history?since=24h&limit=100')
-        .then(function(r) { return r.json(); })
-        .then(function(history) {
-            var chartData = self.processResponseTimeData(history);
-            
-            self.charts.responseTime = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    datasets: chartData.datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            type: 'linear',
-                            title: {
-                                display: true,
-                                text: 'Time'
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Response Time (ms)'
-                            }
-                        }
-                    }
-                }
-            });
-        })
-        .catch(function(error) {
-            console.error('Failed to initialize response time chart:', error);
-        });
-};
-
-SiteMonitorDashboard.prototype.processResponseTimeData = function(history) {
-    var siteData = {};
-    var colors = ['#2563eb', '#059669', '#d97706', '#dc2626', '#7c3aed'];
-    
-    history.forEach(function(entry) {
-        if (!siteData[entry.site_name]) {
-            siteData[entry.site_name] = [];
-        }
-        siteData[entry.site_name].push({
-            x: new Date(entry.timestamp).getTime(),
-            y: entry.duration / 1000000
-        });
-    });
-    
-    var datasets = [];
-    var colorIndex = 0;
-    for (var siteName in siteData) {
-        if (siteData.hasOwnProperty(siteName)) {
-            datasets.push({
-                label: siteName,
-                data: siteData[siteName].slice(-50),
-                borderColor: colors[colorIndex % colors.length],
-                backgroundColor: colors[colorIndex % colors.length] + '20',
-                tension: 0.4,
-                fill: false
-            });
-            colorIndex++;
-        }
-    }
-    
-    return {
-        datasets: datasets
-    };
-};
-
-SiteMonitorDashboard.prototype.initUptimeChart = function() {
-    var ctx = document.getElementById('uptime-chart');
-    if (!ctx || typeof Chart === 'undefined') return;
-    
-    var self = this;
-    
-    fetch('/api/stats')
-        .then(function(r) { return r.json(); })
-        .then(function(stats) {
-            var chartData = self.processUptimeData(stats);
-            
-            self.charts.uptime = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: chartData.labels,
-                    datasets: [{
-                        data: chartData.data,
-                        backgroundColor: ['#059669', '#dc2626', '#d97706'],
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-        })
-        .catch(function(error) {
-            console.error('Failed to initialize uptime chart:', error);
-        });
-};
-
-SiteMonitorDashboard.prototype.processUptimeData = function(stats) {
-    var totalSuccess = 0;
-    var totalFailure = 0;
-    
-    for (var key in stats) {
-        if (stats.hasOwnProperty(key)) {
-            var site = stats[key];
-            totalSuccess += site.successful_checks;
-            totalFailure += site.failed_checks;
-        }
-    }
-    
-    var total = totalSuccess + totalFailure;
-    
-    return {
-        labels: ['Successful', 'Failed'],
-        data: [
-            total > 0 ? (totalSuccess / total * 100).toFixed(1) : 0,
-            total > 0 ? (totalFailure / total * 100).toFixed(1) : 0
-        ]
-    };
 };
 
 SiteMonitorDashboard.prototype.updateActivityFeed = function(history) {
@@ -1087,36 +1255,6 @@ SiteMonitorDashboard.prototype.attemptReconnect = function() {
         }, delay);
     } else {
         this.showToast('Connection lost. Please refresh the page.', 'error');
-    }
-};
-
-SiteMonitorDashboard.prototype.updateCharts = function() {
-    var self = this;
-    
-    if (this.charts.responseTime) {
-        fetch('/api/history?since=24h&limit=100')
-            .then(function(r) { return r.json(); })
-            .then(function(history) {
-                var chartData = self.processResponseTimeData(history);
-                self.charts.responseTime.data.datasets = chartData.datasets;
-                self.charts.responseTime.update('none');
-            })
-            .catch(function(error) {
-                console.error('Failed to update response time chart:', error);
-            });
-    }
-    
-    if (this.charts.uptime) {
-        fetch('/api/stats')
-            .then(function(r) { return r.json(); })
-            .then(function(stats) {
-                var chartData = self.processUptimeData(stats);
-                self.charts.uptime.data.datasets[0].data = chartData.data;
-                self.charts.uptime.update('none');
-            })
-            .catch(function(error) {
-                console.error('Failed to update uptime chart:', error);
-            });
     }
 };
 
