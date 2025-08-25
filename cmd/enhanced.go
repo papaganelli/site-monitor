@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// EnhancedCLIApp extends the base CLI app with new v0.6.0 features
+// EnhancedCLIApp extends the base CLI app with new v0.7.0 features
 type EnhancedCLIApp struct {
 	*CLIApp
 	sslChecker      *ssl.SSLChecker
@@ -96,7 +96,7 @@ func (app *EnhancedCLIApp) ShowAdvancedMetrics(siteName string, since time.Durat
 	}
 
 	sinceTime := time.Now().Add(-since)
-	period := formatDuration(since)
+	period := app.formatDurationString(since)
 
 	if siteName != "" {
 		// Show metrics for specific site
@@ -107,58 +107,7 @@ func (app *EnhancedCLIApp) ShowAdvancedMetrics(siteName string, since time.Durat
 	return app.showAllAdvancedMetrics(sinceTime, period)
 }
 
-// getSiteURL returns the URL for a given site name (helper method)
-// Used by report generation to get SSL check URLs
-func (app *EnhancedCLIApp) getSiteURL(siteName string) string {
-	for _, site := range app.config.Sites {
-		if site.Name == siteName {
-			return site.URL
-		}
-	}
-	return ""
-}
-
-// shouldIncludeSection checks if a section should be included in the report
-// Used by report generation logic
-func (app *EnhancedCLIApp) shouldIncludeSection(schedule *reports.ReportSchedule, section reports.ReportSection) bool {
-	for _, s := range schedule.Sections {
-		if s == section {
-			return true
-		}
-	}
-	return false
-}
-
-// getSitesToReport returns the list of sites to include in the report
-// Used by report generation to determine scope
-func (app *EnhancedCLIApp) getSitesToReport(schedule *reports.ReportSchedule) ([]string, error) {
-	if len(schedule.Sites) > 0 {
-		return schedule.Sites, nil
-	}
-
-	// Return all configured sites
-	var sites []string
-	for _, site := range app.config.Sites {
-		sites = append(sites, site.Name)
-	}
-
-	return sites, nil
-}
-
-// formatPeriod formats the schedule type as a human-readable period
-// Used by report generation for period display
-func (app *EnhancedCLIApp) formatPeriod(schedule reports.ScheduleType) string {
-	switch schedule {
-	case reports.ScheduleDaily:
-		return "Last 24 hours"
-	case reports.ScheduleWeekly:
-		return "Last 7 days"
-	case reports.ScheduleMonthly:
-		return "Last 30 days"
-	default:
-		return "Custom period"
-	}
-}
+// SendTestReport sends a test email report
 func (app *EnhancedCLIApp) SendTestReport() error {
 	if err := app.InitEnhancedFeatures(); err != nil {
 		return err
@@ -185,7 +134,7 @@ func (app *EnhancedCLIApp) SendTestReport() error {
 		Enabled: true,
 	}
 
-	// Send the test report
+	// Send the test report using the PUBLIC method
 	if err := app.reportScheduler.GenerateAndSendReport(testSchedule); err != nil {
 		return fmt.Errorf("failed to send test report: %w", err)
 	}
@@ -306,7 +255,7 @@ func (app *EnhancedCLIApp) printSSLStatus(check ssl.SSLCheck) {
 
 // showSiteAdvancedMetrics displays advanced metrics for a single site
 func (app *EnhancedCLIApp) showSiteAdvancedMetrics(siteName string, since time.Time, period string) error {
-	metrics, err := app.metricsCalc.CalculateAdvancedMetrics(siteName, since, period)
+	siteMetrics, err := app.metricsCalc.CalculateAdvancedMetrics(siteName, since, period)
 	if err != nil {
 		return fmt.Errorf("failed to calculate advanced metrics: %w", err)
 	}
@@ -314,7 +263,7 @@ func (app *EnhancedCLIApp) showSiteAdvancedMetrics(siteName string, since time.T
 	fmt.Printf("📊 Advanced Metrics for %s (%s)\n", siteName, period)
 	fmt.Println(strings.Repeat("━", 70))
 
-	app.printAdvancedMetrics(metrics)
+	app.printAdvancedMetrics(siteMetrics)
 	return nil
 }
 
@@ -334,18 +283,18 @@ func (app *EnhancedCLIApp) showAllAdvancedMetrics(since time.Time, period string
 	fmt.Printf("📊 Advanced Metrics Summary (%s)\n", period)
 	fmt.Println(strings.Repeat("━", 70))
 
-	for i, siteName := range getSortedSiteNames(allStats) {
+	for i, siteName := range app.getSortedSiteNames(allStats) {
 		if i > 0 {
 			fmt.Println()
 		}
 
-		metrics, err := app.metricsCalc.CalculateAdvancedMetrics(siteName, since, period)
+		siteMetrics, err := app.metricsCalc.CalculateAdvancedMetrics(siteName, since, period)
 		if err != nil {
 			fmt.Printf("❌ Failed to calculate metrics for %s: %v\n", siteName, err)
 			continue
 		}
 
-		app.printAdvancedMetrics(metrics)
+		app.printAdvancedMetrics(siteMetrics)
 	}
 
 	return nil
@@ -383,22 +332,12 @@ func (app *EnhancedCLIApp) printAdvancedMetrics(m *metrics.AdvancedMetrics) {
 	}
 
 	// Trends
-	trendIcon := func(trend metrics.TrendDirection) string {
-		switch trend {
-		case metrics.TrendImproving:
-			return "📈"
-		case metrics.TrendDegrading:
-			return "📉"
-		case metrics.TrendStable:
-			return "📊"
-		default:
-			return "❓"
-		}
-	}
+	trendIcon := app.getTrendIcon(m.ResponseTimeTrend)
+	uptimeTrendIcon := app.getTrendIcon(m.UptimeTrend)
 
 	fmt.Printf("   📊 Trends:\n")
-	fmt.Printf("      • Response Time: %s %s\n", trendIcon(m.ResponseTimeTrend), m.ResponseTimeTrend)
-	fmt.Printf("      • Uptime: %s %s\n", trendIcon(m.UptimeTrend), m.UptimeTrend)
+	fmt.Printf("      • Response Time: %s %s\n", trendIcon, m.ResponseTimeTrend)
+	fmt.Printf("      • Uptime: %s %s\n", uptimeTrendIcon, m.UptimeTrend)
 
 	// SLA Compliance (show most relevant)
 	fmt.Printf("   🎯 SLA Compliance:\n")
@@ -486,8 +425,10 @@ func (app *EnhancedCLIApp) setupDefaultReports() {
 	app.reportScheduler.AddSchedule(dailyReport)
 }
 
+// Helper methods
+
 // getSortedSiteNames returns site names sorted alphabetically
-func getSortedSiteNames(stats map[string]storage.Stats) []string {
+func (app *EnhancedCLIApp) getSortedSiteNames(stats map[string]storage.Stats) []string {
 	var names []string
 	for name := range stats {
 		names = append(names, name)
@@ -505,13 +446,56 @@ func getSortedSiteNames(stats map[string]storage.Stats) []string {
 	return names
 }
 
+// getTrendIcon returns emoji for trend direction
+func (app *EnhancedCLIApp) getTrendIcon(trend metrics.TrendDirection) string {
+	switch trend {
+	case metrics.TrendImproving:
+		return "📈"
+	case metrics.TrendDegrading:
+		return "📉"
+	case metrics.TrendStable:
+		return "📊"
+	default:
+		return "❓"
+	}
+}
+
+// formatDurationString formats a duration for display
+func (app *EnhancedCLIApp) formatDurationString(d time.Duration) string {
+	if d < time.Minute {
+		return fmt.Sprintf("%ds", int(d.Seconds()))
+	}
+	if d < time.Hour {
+		minutes := int(d.Minutes())
+		seconds := int(d.Seconds()) % 60
+		if seconds == 0 {
+			return fmt.Sprintf("%dm", minutes)
+		}
+		return fmt.Sprintf("%dm%ds", minutes, seconds)
+	}
+	if d < 24*time.Hour {
+		hours := int(d.Hours())
+		minutes := int(d.Minutes()) % 60
+		if minutes == 0 {
+			return fmt.Sprintf("%dh", hours)
+		}
+		return fmt.Sprintf("%dh%dm", hours, minutes)
+	}
+	days := int(d.Hours()) / 24
+	hours := int(d.Hours()) % 24
+	if hours == 0 {
+		return fmt.Sprintf("%dd", days)
+	}
+	return fmt.Sprintf("%dd%dh", days, hours)
+}
+
 // StartEnhancedMonitor starts monitoring with enhanced features
 func (app *EnhancedCLIApp) StartEnhancedMonitor() error {
 	if err := app.InitEnhancedFeatures(); err != nil {
 		return err
 	}
 
-	fmt.Printf("🚀 Starting Enhanced Site Monitor v0.6.0\n")
+	fmt.Printf("🚀 Starting Enhanced Site Monitor v0.7.0\n")
 	fmt.Printf("💾 Database: %s\n", app.dbPath)
 	fmt.Printf("🌐 Sites: %d\n", len(app.config.Sites))
 
@@ -536,46 +520,29 @@ func (app *EnhancedCLIApp) StartEnhancedMonitor() error {
 	fmt.Println()
 
 	// Start the base monitoring loop
-	// (This would call the original monitor.Start() logic)
 	fmt.Println("Starting monitoring loop...")
 
 	// For now, just indicate enhanced monitoring is active
 	select {} // Block forever (in real implementation, this would be the monitoring loop)
 }
 
-// Example CLI command handlers for new features
+// CLI Command Handlers
 
 // HandleSSLCommand handles the ssl command
 func (app *EnhancedCLIApp) HandleSSLCommand(args []string) error {
-	// Parse SSL-specific flags
-	// --site <name>  : Check specific site
-	// --warn-days <n>: Warning threshold (default 30)
-	// --json         : JSON output
-
 	return app.ShowSSLStatus()
 }
 
 // HandleMetricsCommand handles the metrics command
 func (app *EnhancedCLIApp) HandleMetricsCommand(args []string) error {
-	// Parse metrics-specific flags
-	// --site <name>    : Specific site
-	// --since <duration> : Time period
-	// --percentiles    : Show detailed percentiles
-	// --trends         : Show trend analysis
-
-	siteName := ""          // Parse from args
-	since := 24 * time.Hour // Parse from args
+	siteName := ""
+	since := 24 * time.Hour
 
 	return app.ShowAdvancedMetrics(siteName, since)
 }
 
 // HandleReportCommand handles the report command
 func (app *EnhancedCLIApp) HandleReportCommand(args []string) error {
-	// Subcommands:
-	// report send-test           : Send test report
-	// report schedule <params>   : Set up scheduled report
-	// report list               : List scheduled reports
-
 	if len(args) == 0 {
 		return fmt.Errorf("report command requires a subcommand")
 	}
@@ -584,11 +551,9 @@ func (app *EnhancedCLIApp) HandleReportCommand(args []string) error {
 	case "send-test":
 		return app.SendTestReport()
 	case "schedule":
-		// Parse schedule parameters
 		return app.SetupReportSchedule("Custom Report", reports.ScheduleWeekly,
 			app.config.Alerts.Email.Recipients)
 	case "list":
-		// List existing schedules
 		fmt.Println("📋 Scheduled Reports:")
 		fmt.Println("• Weekly Executive Summary (disabled)")
 		fmt.Println("• Daily Operations Report (disabled)")
@@ -600,12 +565,6 @@ func (app *EnhancedCLIApp) HandleReportCommand(args []string) error {
 
 // HandleTemplateCommand handles the template command
 func (app *EnhancedCLIApp) HandleTemplateCommand(args []string) error {
-	// Subcommands:
-	// template list              : List available templates
-	// template test <id>         : Test template rendering
-	// template export <id>       : Export template to JSON
-	// template import <file>     : Import template from JSON
-
 	if len(args) == 0 {
 		return fmt.Errorf("template command requires a subcommand")
 	}
