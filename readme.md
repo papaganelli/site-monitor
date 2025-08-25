@@ -1,8 +1,8 @@
-# Site Monitor v0.6.0 🚀
+# Site Monitor v0.7.0 🚀
 
 Un outil de surveillance de sites web professionnel avec **SSL monitoring**, **métriques avancées**, **rapports automatiques** et **templates d'alertes personnalisables**, écrit en Go.
 
-## ✨ Nouveautés v0.6.0
+## ✨ Nouveautés v0.7.0
 
 ### 🔒 **SSL/TLS Monitoring**
 - ✅ Vérification automatique des certificats SSL
@@ -965,7 +965,7 @@ Uptime monitoring     : > 99.9%
 
 ## 🌟 Comparaison Concurrence
 
-| Fonctionnalité | Site Monitor v0.6.0 | Pingdom | UptimeRobot | StatusCake |
+| Fonctionnalité | Site Monitor v0.7.0 | Pingdom | UptimeRobot | StatusCake |
 |----------------|----------------------|---------|-------------|------------|
 | **SSL Monitoring** | ✅ Complet + Alertes | ✅ Basic | ❌ Non | ✅ Basic |
 | **Métriques P95/P99** | ✅ Natif | ❌ Non | ❌ Non | ❌ Non |
@@ -1099,7 +1099,7 @@ Site Monitor v0.6.0 est construit avec :
 - ✅ **Documentation complète** et support communautaire
 
 ### 🎊 Ready for Production
-Site Monitor v0.6.0 est maintenant **production-ready** pour :
+Site Monitor v0.7.0 est maintenant **production-ready** pour :
 - 🏢 **Entreprises** de toutes tailles
 - 🚀 **Startups** en croissance rapide
 - 🛒 **E-commerce** avec SLA critiques
@@ -1132,7 +1132,7 @@ echo '{"sites":[{"name":"Mon Site","url":"https://monsite.com","ssl_check":true}
 ./site-monitor run
 ```
 
-**[🚀 Télécharger Site Monitor v0.6.0](https://github.com/papaganelli/site-monitor/releases/latest)**
+**[🚀 Télécharger Site Monitor v0.7.0](https://github.com/papaganelli/site-monitor/releases/latest)**
 
 ---
 

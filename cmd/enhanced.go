@@ -108,6 +108,7 @@ func (app *EnhancedCLIApp) ShowAdvancedMetrics(siteName string, since time.Durat
 }
 
 // getSiteURL returns the URL for a given site name (helper method)
+// Used by report generation to get SSL check URLs
 func (app *EnhancedCLIApp) getSiteURL(siteName string) string {
 	for _, site := range app.config.Sites {
 		if site.Name == siteName {
@@ -118,6 +119,7 @@ func (app *EnhancedCLIApp) getSiteURL(siteName string) string {
 }
 
 // shouldIncludeSection checks if a section should be included in the report
+// Used by report generation logic
 func (app *EnhancedCLIApp) shouldIncludeSection(schedule *reports.ReportSchedule, section reports.ReportSection) bool {
 	for _, s := range schedule.Sections {
 		if s == section {
@@ -128,6 +130,7 @@ func (app *EnhancedCLIApp) shouldIncludeSection(schedule *reports.ReportSchedule
 }
 
 // getSitesToReport returns the list of sites to include in the report
+// Used by report generation to determine scope
 func (app *EnhancedCLIApp) getSitesToReport(schedule *reports.ReportSchedule) ([]string, error) {
 	if len(schedule.Sites) > 0 {
 		return schedule.Sites, nil
@@ -143,6 +146,7 @@ func (app *EnhancedCLIApp) getSitesToReport(schedule *reports.ReportSchedule) ([
 }
 
 // formatPeriod formats the schedule type as a human-readable period
+// Used by report generation for period display
 func (app *EnhancedCLIApp) formatPeriod(schedule reports.ScheduleType) string {
 	switch schedule {
 	case reports.ScheduleDaily:

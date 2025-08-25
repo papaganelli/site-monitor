@@ -451,6 +451,17 @@ func (tm *TemplateManager) RenderTemplate(templateID string, alert Alert) (strin
 	return subject, body, nil
 }
 
+// titleCase capitalizes the first letter of each word (replacement for deprecated strings.Title)
+func titleCase(s string) string {
+	words := strings.Fields(s)
+	for i, word := range words {
+		if len(word) > 0 {
+			words[i] = strings.ToUpper(string(word[0])) + strings.ToLower(word[1:])
+		}
+	}
+	return strings.Join(words, " ")
+}
+
 // renderString renders a template string with data
 func (tm *TemplateManager) renderString(templateStr string, data interface{}, format TemplateFormat) (string, error) {
 	funcMap := template.FuncMap{
@@ -459,7 +470,7 @@ func (tm *TemplateManager) renderString(templateStr string, data interface{}, fo
 		"unixTime":       unixTime,
 		"upper":          strings.ToUpper,
 		"lower":          strings.ToLower,
-		"title":          strings.Title,
+		"title":          titleCase, // Use custom titleCase function
 		"join":           strings.Join,
 		"replace":        strings.Replace,
 		"contains":       strings.Contains,
