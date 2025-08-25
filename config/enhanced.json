@@ -1,0 +1,206 @@
+{
+  "sites": [
+    {
+      "name": "Site Tir Sportif Saint Denis en Val",
+      "url": "https://tirsportif-saintdenisenval.fr/",
+      "interval": "30s",
+      "timeout": "10s",
+      "ssl_check": true,
+      "ssl_warn_days": 30,
+      "expected_status_codes": [200, 301, 302]
+    },
+    {
+      "name": "API Backend",
+      "url": "https://api.monsite.com/health",
+      "interval": "60s", 
+      "timeout": "5s",
+      "ssl_check": true,
+      "ssl_warn_days": 14,
+      "expected_status_codes": [200],
+      "headers": {
+        "User-Agent": "SiteMonitor/0.6.0",
+        "Authorization": "Bearer your-api-token"
+      }
+    }
+  ],
+  
+  "alerts": {
+    "email": {
+      "enabled": true,
+      "smtp_server": "smtp.gmail.com:587",
+      "username": "monitoring@monsite.com",
+      "password": "your-app-password",
+      "from": "Site Monitor <monitoring@monsite.com>",
+      "recipients": ["admin@monsite.com", "devops@monsite.com"],
+      "use_tls": true
+    },
+    
+    "webhook": {
+      "enabled": true,
+      "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+      "format": "slack",
+      "timeout": "30s",
+      "retry_count": 3,
+      "headers": {
+        "User-Agent": "SiteMonitor/0.6.0"
+      }
+    },
+    
+    "templates": {
+      "site_down_email": "default-site-down-email",
+      "site_up_email": "default-site-up-email",
+      "slow_response_email": "default-slow-response-email",
+      "ssl_expiry_email": "default-ssl-expiry-email",
+      "site_down_slack": "default-site-down-slack"
+    },
+    
+    "thresholds": {
+      "consecutive_failures": 3,
+      "response_time_threshold": "5s",
+      "uptime_threshold": 95.0,
+      "uptime_window": "24h",
+      "performance_window": "1h",
+      "alert_cooldown": "5m",
+      "ssl_expiry_warning_days": [30, 14, 7, 1]
+    }
+  },
+  
+  "reports": {
+    "email": {
+      "enabled": true,
+      "schedules": [
+        {
+          "name": "Weekly Executive Summary",
+          "schedule": "weekly",
+          "day_of_week": 1,
+          "hour": 9,
+          "recipients": ["ceo@monsite.com", "cto@monsite.com"],
+          "format": "html",
+          "sections": [
+            "overview",
+            "sla_compliance", 
+            "ssl_certificates",
+            "recommendations"
+          ],
+          "template": "executive-summary"
+        },
+        {
+          "name": "Daily Operations Report",
+          "schedule": "daily",
+          "hour": 8,
+          "recipients": ["devops@monsite.com", "support@monsite.com"],
+          "format": "html",
+          "sections": [
+            "overview",
+            "detailed_metrics",
+            "alerts_summary",
+            "performance_trends"
+          ],
+          "template": "operations-daily"
+        },
+        {
+          "name": "Monthly SLA Report",
+          "schedule": "monthly",
+          "day_of_month": 1,
+          "hour": 10,
+          "recipients": ["management@monsite.com"],
+          "format": "pdf",
+          "sections": [
+            "overview",
+            "sla_compliance",
+            "performance_trends",
+            "error_analysis",
+            "recommendations"
+          ],
+          "template": "sla-monthly",
+          "include_csv_export": true
+        }
+      ]
+    }
+  },
+  
+  "metrics": {
+    "advanced": {
+      "enabled": true,
+      "percentiles": [50, 90, 95, 99, 99.9],
+      "calculate_trends": true,
+      "retention_days": 90,
+      "sla_targets": {
+        "99.9": "Enterprise SLA",
+        "99.5": "Standard SLA", 
+        "95.0": "Basic SLA"
+      }
+    },
+    
+    "performance": {
+      "response_time_buckets": [50, 100, 200, 500, 1000, 2000, 5000],
+      "error_classification": {
+        "timeout": ["timeout", "deadline"],
+        "network": ["connection", "network", "dns"],
+        "ssl": ["ssl", "tls", "certificate"],
+        "server": ["5"],
+        "client": ["4"]
+      }
+    }
+  },
+  
+  "ssl": {
+    "enabled": true,
+    "check_interval": "24h",
+    "warning_thresholds": [30, 14, 7, 3, 1],
+    "verify_chain": true,
+    "check_revocation": false,
+    "timeout": "10s"
+  },
+  
+  "storage": {
+    "sqlite": {
+      "path": "site-monitor.db",
+      "wal_mode": true,
+      "vacuum_interval": "7d"
+    },
+    "retention": {
+      "raw_data_days": 30,
+      "aggregated_data_days": 365,
+      "alert_history_days": 90
+    }
+  },
+  
+  "dashboard": {
+    "enabled": true,
+    "port": 8080,
+    "refresh_interval": 30,
+    "features": {
+      "real_time_updates": true,
+      "ssl_monitoring": true,
+      "advanced_metrics": true,
+      "alert_management": true
+    }
+  },
+  
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "output": "stdout",
+    "file": {
+      "enabled": false,
+      "path": "site-monitor.log",
+      "max_size": "100MB",
+      "max_age": "7d",
+      "compress": true
+    }
+  },
+  
+  "api": {
+    "enabled": true,
+    "port": 8081,
+    "cors": {
+      "enabled": true,
+      "origins": ["*"]
+    },
+    "rate_limiting": {
+      "enabled": true,
+      "requests_per_minute": 100
+    }
+  }
+}
